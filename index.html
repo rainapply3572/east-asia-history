@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="以地圖與時間軸瀏覽東亞重大歷史事件。">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <title>東亞歷史時空圖</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="vendor/leaflet.css">
+  <link rel="stylesheet" href="vendor/MarkerCluster.css">
+  <link rel="stylesheet" href="vendor/MarkerCluster.Default.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="brand">
+        <p class="eyebrow">East Asia Timeline</p>
+        <div class="title-row">
+          <h1>東亞歷史時空圖</h1>
+          <a class="site-link" href="guess/">東亞歷史猜年</a>
+        </div>
+        <p class="tagline">在地圖上移動年代，瀏覽事件與近似疆域，涵蓋中國、日本、朝鮮半島、臺灣、蒙古與越南</p>
+      </div>
+      <button type="button" class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="sidebar">
+        篩選／列表
+      </button>
+    </header>
+
+    <div class="workspace">
+      <aside class="sidebar" id="sidebar">
+        <section class="panel filters" aria-label="篩選條件">
+          <div class="filter-group">
+            <h2>地區</h2>
+            <div class="chips" id="regionFilters"></div>
+          </div>
+          <div class="filter-group">
+            <h2>類型</h2>
+            <div class="chips" id="categoryFilters"></div>
+          </div>
+        </section>
+
+        <section class="panel list-panel" aria-label="事件列表">
+          <div class="list-head">
+            <h2>事件列表</h2>
+            <p class="list-count" id="listCount">載入中…</p>
+          </div>
+          <ol class="event-list" id="eventList"></ol>
+        </section>
+      </aside>
+
+      <main class="map-wrap">
+        <div id="map" role="application" aria-label="東亞歷史地圖"></div>
+        <div class="map-ui">
+          <div class="legend" id="legend" aria-hidden="true"></div>
+          <section class="territory-panel" id="territoryPanel" aria-label="疆域圖">
+            <div class="territory-head">
+              <label class="toggle">
+                <input type="checkbox" id="territoryToggle" checked>
+                <span>顯示疆域圖</span>
+              </label>
+              <button type="button" class="territory-toggle-details" id="territoryExpand" aria-expanded="false">展開圖例</button>
+            </div>
+            <p class="territory-year" id="territoryYear"></p>
+            <p class="territory-majors" id="territoryMajors"></p>
+            <div class="territory-details" id="territoryDetails" hidden>
+              <ul class="territory-list" id="territoryList"></ul>
+              <p class="territory-note" id="territoryNote"></p>
+            </div>
+            <p class="territory-cite" id="territoryCite"></p>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <section class="timeline" aria-label="年代範圍">
+      <div class="timeline-top">
+        <div class="range-readout">
+          <span class="range-label">年代範圍</span>
+          <strong id="rangeText">—</strong>
+        </div>
+        <div class="timeline-actions">
+          <label class="speed-control toast-toggle">
+            <input type="checkbox" id="playToastToggle" checked>
+            事件視窗
+          </label>
+          <label class="speed-control">速度
+            <select id="playSpeed" aria-label="播放速度">
+              <option value="0.5">0.5×</option>
+              <option value="1" selected>1×</option>
+              <option value="2">2×</option>
+              <option value="4">4×</option>
+            </select>
+          </label>
+          <button type="button" class="ghost" id="resetRange">重設全時期</button>
+          <button type="button" class="ghost" id="playBtn" aria-pressed="false">依年代播放</button>
+        </div>
+      </div>
+      <div class="slider-block">
+        <div class="slider" id="yearSlider">
+          <div class="slider-track">
+            <div class="slider-fill" id="sliderFill"></div>
+          </div>
+          <label class="sr-only" for="yearStart">起始年</label>
+          <input type="range" id="yearStart" min="-1046" max="2000" step="1" value="-1046">
+          <label class="sr-only" for="yearEnd">結束年</label>
+          <input type="range" id="yearEnd" min="-1046" max="2000" step="1" value="2000">
+        </div>
+        <div class="era-marks" aria-hidden="true">
+          <span class="era-keep" style="left: 0%">前 1046</span>
+          <span class="era-wide" style="left: 27.08%">前 221</span>
+          <span class="era-keep" style="left: 34.34%">西元</span>
+          <span class="era-mid" style="left: 54.63%">唐</span>
+          <span class="era-keep" style="left: 65.86%">宋</span>
+          <span class="era-wide" style="left: 79.25%">明</span>
+          <span class="era-keep" style="left: 88.31%">清</span>
+          <span class="era-mid" style="left: 97.11%">民國</span>
+          <span class="era-keep" style="left: 100%">2000</span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <aside class="detail" id="detail" hidden>
+    <button type="button" class="detail-close" id="detailClose" aria-label="關閉詳情">×</button>
+    <p class="detail-meta">
+      <span class="pill" id="detailCategory"></span>
+      <span id="detailRegion"></span>
+    </p>
+    <h2 id="detailTitle"></h2>
+    <dl class="detail-facts">
+      <div>
+        <dt>年代</dt>
+        <dd id="detailYear"></dd>
+      </div>
+      <div>
+        <dt>地點</dt>
+        <dd id="detailLocation"></dd>
+      </div>
+      <div>
+        <dt>地區</dt>
+        <dd id="detailRegionFact"></dd>
+      </div>
+      <div>
+        <dt>類型</dt>
+        <dd id="detailCategoryFact"></dd>
+      </div>
+    </dl>
+    <p class="detail-desc" id="detailDesc"></p>
+  </aside>
+
+  <div class="backdrop" id="backdrop" hidden></div>
+
+  <script src="vendor/leaflet.js"></script>
+  <script src="vendor/leaflet.markercluster.js"></script>
+  <script src="events.js"></script>
+  <script src="territories.js"></script>
+  <script src="territory-labels.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="根據事件描述猜測發生年分的東亞歷史遊戲。">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <title>東亞歷史猜年</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="vendor/leaflet.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app" id="app">
+    <!-- 起始設定 -->
+    <section class="screen screen-start" id="screenStart" aria-label="遊戲設定">
+      <header class="hero">
+        <a class="site-link" href="../">東亞歷史時空圖</a>
+        <p class="eyebrow">East Asia Year Guess</p>
+        <h1>東亞歷史猜年</h1>
+        <p class="tagline">讀一段事件，在時間軸上標出你認為的年分。離答案越近，分數越高。</p>
+        <div class="mode-switch" role="tablist" aria-label="遊玩方式">
+          <button type="button" class="mode-btn is-on" id="modeSolo" aria-selected="true">單人遊玩</button>
+          <button type="button" class="mode-btn" id="modeHost" aria-selected="false">開房間</button>
+          <button type="button" class="mode-btn" id="modeJoin" aria-selected="false">加入房間</button>
+        </div>
+      </header>
+
+      <div class="mp-panel panel" id="mpPanel" hidden>
+        <div class="mp-connect" id="mpConnectBox">
+          <label class="mp-field">
+            <span>暱稱</span>
+            <input type="text" id="mpNick" maxlength="12" placeholder="怎麼稱呼你" autocomplete="nickname">
+          </label>
+          <label class="mp-field" id="mpCodeField" hidden>
+            <span>房間代碼</span>
+            <input type="text" id="mpCodeInput" maxlength="8" placeholder="例如 7K3M9P" autocomplete="off" spellcheck="false">
+          </label>
+          <button type="button" class="primary" id="mpConnectBtn">建立房間</button>
+        </div>
+        <div class="mp-room" id="mpRoom" hidden>
+          <div class="mp-code-row">
+            <div>
+              <p class="mp-code-label">房間代碼</p>
+              <p class="mp-code" id="mpCodeDisplay">——</p>
+            </div>
+            <div class="mp-code-actions">
+              <button type="button" class="ghost" id="mpCopyBtn">複製代碼</button>
+              <button type="button" class="ghost" id="mpLeaveBtn">離開房間</button>
+            </div>
+          </div>
+          <p class="mp-status" id="mpStatus"></p>
+          <h2 class="mp-list-title">房間成員 <span id="mpPlayerCount">0</span></h2>
+          <ul class="mp-players" id="mpPlayerList"></ul>
+          <div class="mp-settings-summary" id="mpSettingsSummary" hidden></div>
+        </div>
+        <p class="mp-error" id="mpError" hidden></p>
+        <p class="mp-hint" id="mpHint">連線時會經由 PeerJS 公共伺服器交換訊號，請保持網路暢通。所有人連到房主；房主負責出題與計分。</p>
+      </div>
+
+      <form class="setup-card panel" id="setupForm" action="javascript:void(0)">
+        <div class="filter-group">
+          <h2>地區</h2>
+          <div class="chips" id="regionFilters" role="group" aria-label="選擇地區"></div>
+        </div>
+
+        <div class="filter-group">
+          <h2>年代範圍</h2>
+          <div class="chips" id="presetFilters" role="group" aria-label="年代範圍預設"></div>
+          <div class="range-readout setup-range-readout">
+            <span class="range-label">自訂範圍</span>
+            <strong id="rangeText">—</strong>
+          </div>
+          <div class="slider-block">
+            <div class="scheme-row" id="setupSchemeRow">
+              <span class="scheme-label">時間軸</span>
+              <div class="chips scheme-chips" id="setupSchemeSwitch" role="radiogroup" aria-label="時間軸朝代體系"></div>
+            </div>
+            <div class="slider dual has-periods custom-slider" id="rangeSlider">
+              <div class="slider-track" id="setupTrack">
+                <div class="period-bands" id="setupPeriodBands" aria-hidden="true"></div>
+                <div class="range-dim left" id="rangeDimLeft"></div>
+                <div class="range-dim right" id="rangeDimRight"></div>
+              </div>
+              <div class="slider-thumb range-thumb start" id="rangeThumbStart" aria-hidden="true"></div>
+              <div class="slider-thumb range-thumb end" id="rangeThumbEnd" aria-hidden="true"></div>
+              <label class="sr-only" for="rangeStart">起始年</label>
+              <input type="range" id="rangeStart" class="slider-a11y" min="-1046" max="1999" step="1" value="-1046">
+              <label class="sr-only" for="rangeEnd">結束年</label>
+              <input type="range" id="rangeEnd" class="slider-a11y" min="-1046" max="1999" step="1" value="1999">
+            </div>
+            <div class="period-caption" id="setupPeriodCaption"></div>
+          </div>
+        </div>
+
+        <div class="filter-group">
+          <h2>類型 <span class="optional">（可選）</span></h2>
+          <div class="chips" id="categoryFilters" role="group" aria-label="選擇類型"></div>
+        </div>
+
+        <div class="setup-row">
+          <div class="filter-group">
+            <h2>回合數</h2>
+            <div class="chips" id="roundFilters" role="radiogroup" aria-label="回合數"></div>
+          </div>
+          <div class="filter-group" id="timeLimitGroup" hidden>
+            <h2>每題時限</h2>
+            <div class="chips" id="timeLimitFilters" role="radiogroup" aria-label="每題時限"></div>
+          </div>
+          <div class="toggle-stack">
+            <label class="toggle map-toggle">
+              <input type="checkbox" id="showMap" checked>
+              <span>顯示事件地點地圖</span>
+            </label>
+            <label class="toggle map-toggle">
+              <input type="checkbox" id="curriculumOnly">
+              <span>僅課內題</span>
+            </label>
+          </div>
+        </div>
+        <p class="curriculum-hint">開啟「僅課內題」後，只出康軒版國中社會第三、四冊歷史（八年級「中國與東亞」，108課綱）範圍內的題目。</p>
+
+        <div class="setup-foot">
+          <p class="match-count" id="matchCount">符合事件：—</p>
+          <p class="best-hint" id="bestHint"></p>
+          <p class="setup-error" id="setupError" hidden></p>
+          <button type="submit" class="primary" id="startBtn">開始遊戲</button>
+        </div>
+      </form>
+
+      <p class="rules">每題滿分 5,000 分，依所選年代範圍的寬度計分；答對得滿分。同一局不會重複同一則事件。單人模式可直接雙擊本頁開啟。多人連線需能連上網路（PeerJS 公共伺服器）；若瀏覽器在 file:// 下無法建立連線，請改用本機或網站以 http 開啟。</p>
+    </section>
+
+    <!-- 遊玩 -->
+    <section class="screen screen-play" id="screenPlay" hidden aria-label="遊戲進行中">
+      <header class="play-header">
+        <div class="brand-mini">
+          <a class="site-link" href="../">東亞歷史時空圖</a>
+          <h1>東亞歷史猜年</h1>
+        </div>
+        <div class="play-stats">
+          <div>
+            <span class="stat-label">回合</span>
+            <strong id="roundLabel">1 / 10</strong>
+          </div>
+          <div>
+            <span class="stat-label">目前得分</span>
+            <strong id="liveScore">0</strong>
+          </div>
+          <div>
+            <span class="stat-label">目前連對</span>
+            <strong id="liveStreak">0</strong>
+          </div>
+          <div id="mpTimerWrap" hidden>
+            <span class="stat-label">剩餘時間</span>
+            <strong id="mpTimer">—</strong>
+          </div>
+        </div>
+        <button type="button" class="ghost" id="quitBtn">結束本局</button>
+      </header>
+
+      <div class="play-body" id="playBody">
+        <article class="panel event-card" id="eventCard">
+          <p class="detail-meta">
+            <span class="pill" id="eventCategory"></span>
+            <span id="eventRegion"></span>
+          </p>
+          <h2 id="eventTitle"></h2>
+          <p class="event-unit" id="eventUnit" hidden></p>
+          <p class="event-location" id="eventLocation"></p>
+          <p class="event-desc" id="eventDesc"></p>
+        </article>
+        <div class="panel map-card" id="mapCard">
+          <div id="map" role="application" aria-label="事件地點地圖"></div>
+        </div>
+      </div>
+
+      <section class="guess-dock panel" id="guessDock" aria-label="作答區">
+        <div class="mp-answer-status" id="mpAnswerStatus" hidden>
+          <p class="mp-answer-label">作答狀況</p>
+          <ul class="mp-answer-list" id="mpAnswerList"></ul>
+        </div>
+        <div class="guess-input" id="guessInput">
+          <div class="guess-readout">
+            <span class="range-label">你的猜測</span>
+            <strong id="guessText">—</strong>
+            <div class="scheme-row inline" id="guessSchemeRow">
+              <span class="scheme-label">時間軸</span>
+              <div class="chips scheme-chips" id="guessSchemeSwitch" role="radiogroup" aria-label="時間軸朝代體系"></div>
+            </div>
+          </div>
+          <div class="guess-controls">
+            <div class="slider-block guess-slider-block">
+              <div class="slider has-periods custom-slider" id="guessSliderWrap">
+                <div class="slider-track" id="guessTrack">
+                  <div class="period-bands" id="guessPeriodBands" aria-hidden="true"></div>
+                </div>
+                <div class="slider-thumb" id="guessThumb" aria-hidden="true"></div>
+                <label class="sr-only" for="guessSlider">猜測年分</label>
+                <input type="range" id="guessSlider" class="slider-a11y" min="-1046" max="1999" step="1" value="1000">
+              </div>
+            </div>
+            <label class="toggle bce-toggle" id="bceToggleLabel">
+              <input type="checkbox" id="bceToggle">
+              <span>西元前</span>
+            </label>
+            <label class="year-field">
+              <span class="sr-only">年分數值</span>
+              <input type="number" id="guessNumber" inputmode="numeric" step="1">
+              <span class="year-suffix" id="yearSuffix">年</span>
+            </label>
+            <button type="button" class="primary" id="submitBtn">提交答案</button>
+          </div>
+        </div>
+
+        <div class="reveal" id="revealPanel" hidden>
+          <div class="reveal-head">
+            <p class="reveal-verdict" id="revealVerdict"></p>
+            <p class="reveal-points" id="revealPoints"></p>
+          </div>
+          <div class="compare-timeline" id="compareTimeline" aria-label="猜測與正確年分">
+            <div class="compare-track has-periods">
+              <div class="period-bands" id="revealPeriodBands" aria-hidden="true"></div>
+              <div class="compare-gap" id="compareGap"></div>
+              <div class="mp-marker-layer" id="mpMarkerLayer"></div>
+              <span class="compare-marker guess" id="markerGuess"><i>你的猜測</i><b id="markerGuessYear"></b></span>
+              <span class="compare-marker actual" id="markerActual"><i>正確年分</i><b id="markerActualYear"></b></span>
+            </div>
+            <div class="compare-ends">
+              <span id="compareStart" class="compare-end start"></span>
+              <span id="compareEnd" class="compare-end end"></span>
+            </div>
+          </div>
+          <div class="score-meter" aria-label="本題得分">
+            <div class="score-meter-fill" id="scoreMeterFill"></div>
+            <span class="score-meter-label" id="scoreMeterLabel">0 / 5,000</span>
+          </div>
+          <div class="mp-board" id="mpLeaderboard" hidden></div>
+          <div class="reveal-actions">
+            <button type="button" class="primary" id="nextBtn">下一題</button>
+            <p class="mp-wait-hint" id="mpWaitHint" hidden>等待房主進入下一題…</p>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <!-- 結算 -->
+    <section class="screen screen-result" id="screenResult" hidden aria-label="本局結算">
+      <header class="hero compact">
+        <a class="site-link" href="../">東亞歷史時空圖</a>
+        <p class="eyebrow">本局結束</p>
+        <h1>東亞歷史猜年</h1>
+      </header>
+      <div class="result-card panel">
+        <div class="mp-board final" id="mpStandings" hidden></div>
+        <p class="result-total-label">總分</p>
+        <p class="result-total" id="resultTotal">0</p>
+        <p class="result-max" id="resultMax"></p>
+        <p class="result-record" id="resultRecord" hidden>新紀錄！已寫入本機最高分</p>
+        <div class="result-meta">
+          <div>
+            <span class="stat-label">最佳連對</span>
+            <strong id="resultStreak">0</strong>
+          </div>
+          <div>
+            <span class="stat-label">平均每題</span>
+            <strong id="resultAverage">0</strong>
+          </div>
+          <div>
+            <span class="stat-label">完全正確</span>
+            <strong id="resultExact">0</strong>
+          </div>
+        </div>
+        <h2 class="result-list-title">各回合摘要</h2>
+        <div class="result-table-wrap">
+          <table class="result-table" id="resultTable">
+            <thead>
+              <tr>
+                <th>回</th>
+                <th>事件</th>
+                <th>你的猜測</th>
+                <th>正確年分</th>
+                <th>相差</th>
+                <th>得分</th>
+              </tr>
+            </thead>
+            <tbody id="resultBody"></tbody>
+          </table>
+        </div>
+        <div class="result-actions">
+          <button type="button" class="primary" id="playAgainBtn">再玩一輪</button>
+          <button type="button" class="ghost" id="adjustBtn">調整設定</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="vendor/leaflet.js"></script>
+  <script src="vendor/peerjs.min.js"></script>
+  <script src="events.js"></script>
+  <script src="periods.js"></script>
+  <script src="app.js"></script>
+  <script src="multiplayer.js"></script>
+</body>
+</html>
