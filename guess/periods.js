@@ -88,7 +88,9 @@ window.PERIOD_SCHEMES = {
   "臺灣": {
     label: "臺灣時期",
     periods: [
-      { id: "indigenous", label: "原住民族", short: "原住", start: -1046, end: 1624, visStart: -1046, visEnd: 1624, color: "#5a6b3d" },
+      { id: "tw-paleolithic", label: "舊石器", short: "舊石", start: -28000, end: -5001, visStart: -28000, visEnd: -5000, color: "#6b5344", note: "舊石器時代。左緣取距今約三萬年（西元前 28000 年）的常用估計，右緣為西元前 5000 年。不是大坌坑、卑南、十三行等個別文化。" },
+      { id: "tw-neolithic", label: "新石器", short: "新石", start: -5000, end: 0, visStart: -5000, visEnd: 1, color: "#c4a574", note: "新石器時代，西元前 5000 年至西元前後（約兩千年前）。" },
+      { id: "tw-metal", label: "金屬器", short: "金屬", start: 1, end: 1623, visStart: 1, visEnd: 1624, color: "#5a6b3d", note: "金屬器時代，約兩千年前至 1624 年大航海時代開始。右緣與荷西相接。" },
       { id: "dutch-spanish", label: "荷西", short: "荷西", start: 1624, end: 1662, visStart: 1624, visEnd: 1662, color: "#3d5a80", note: "荷蘭 1624–1662 年，西班牙 1626–1642 年據北部。" },
       { id: "koxinga", label: "明鄭", short: "明鄭", start: 1662, end: 1683, visStart: 1662, visEnd: 1683, color: "#8c4a3a" },
       { id: "qing-tw", label: "清", short: "清", start: 1683, end: 1895, visStart: 1683, visEnd: 1895, color: "#3e4a59" },

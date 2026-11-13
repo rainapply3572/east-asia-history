@@ -173,24 +173,105 @@
     return el ? el.getBoundingClientRect().width : 0;
   }
 
+  /* 臺灣史前很長。色帶、滑桿與揭曉標記共用這組分段，分數仍按真實年差計算。 */
+  const PALEO_START = -28000;
+  const NEO_START = -5000;
+  const METAL_START = 1;
+  const HIST_START = 1624;
+  const TIME_BUCKETS = [
+    { from: PALEO_START, to: NEO_START, weight: 0.09 },
+    { from: NEO_START, to: METAL_START, weight: 0.10 },
+    { from: METAL_START, to: HIST_START, weight: 0.12 },
+    { from: HIST_START, to: Infinity, weight: 0.69 }
+  ];
+
+  function axisMin() {
+    if (state.schemeId === "臺灣") return Math.min(DATA_MIN, PALEO_START);
+    return DATA_MIN;
+  }
+
+  function axisMax() {
+    return DATA_MAX;
+  }
+
+  function useCompressedScale(start, end) {
+    if (!(end > start)) return false;
+    if (start < NEO_START) return true;
+    return state.schemeId === "臺灣" && start < HIST_START && end > HIST_START;
+  }
+
+  function timePieces(start, end) {
+    const pieces = [];
+    if (start < PALEO_START) {
+      pieces.push({ a: start, c: Math.min(end, PALEO_START), w: 0.04 });
+    }
+    TIME_BUCKETS.forEach((bucket) => {
+      const bucketEnd = bucket.to === Infinity ? end : bucket.to;
+      const a = Math.max(start, bucket.from);
+      const c = Math.min(end, bucketEnd);
+      if (!(c > a)) return;
+      const nominal = bucketEnd - bucket.from;
+      const frac = nominal > 0 ? (c - a) / nominal : 1;
+      pieces.push({ a: a, c: c, w: bucket.weight * frac });
+    });
+    return pieces;
+  }
+
+  function yearToUnit(year, start, end) {
+    const y = Number(year);
+    if (!useCompressedScale(start, end)) {
+      return (y - start) / Math.max(1, end - start);
+    }
+    const pieces = timePieces(start, end);
+    const total = pieces.reduce((sum, piece) => sum + piece.w, 0) || 1;
+    let acc = 0;
+    for (let i = 0; i < pieces.length; i++) {
+      const piece = pieces[i];
+      if (y <= piece.a) return acc / total;
+      if (y >= piece.c) {
+        acc += piece.w;
+        continue;
+      }
+      const t = (y - piece.a) / (piece.c - piece.a);
+      return (acc + t * piece.w) / total;
+    }
+    return 1;
+  }
+
+  function unitToYear(unit, start, end) {
+    const u = clamp(unit, 0, 1);
+    if (!useCompressedScale(start, end)) {
+      return start + u * (end - start);
+    }
+    const pieces = timePieces(start, end);
+    const total = pieces.reduce((sum, piece) => sum + piece.w, 0) || 1;
+    let target = u * total;
+    for (let i = 0; i < pieces.length; i++) {
+      const piece = pieces[i];
+      if (target <= piece.w || i === pieces.length - 1) {
+        const t = piece.w === 0 ? 0 : target / piece.w;
+        return piece.a + clamp(t, 0, 1) * (piece.c - piece.a);
+      }
+      target -= piece.w;
+    }
+    return end;
+  }
+
   function yearToX(year, start, end, width, inset) {
     if (inset == null) inset = AXIS_INSET;
-    const span = Math.max(1, end - start);
     const usable = Math.max(0, width - 2 * inset);
-    return inset + ((Number(year) - start) / span) * usable;
+    return inset + yearToUnit(year, start, end) * usable;
   }
 
   function xToYear(x, start, end, width, inset) {
     if (inset == null) inset = AXIS_INSET;
-    const span = Math.max(1, end - start);
     const usable = Math.max(0, width - 2 * inset);
-    const t = usable === 0 ? 0 : (x - inset) / usable;
-    return clamp(Math.round(start + t * span), start, end);
+    const unit = usable === 0 ? 0 : (x - inset) / usable;
+    return clamp(Math.round(unitToYear(unit, start, end)), start, end);
   }
 
   function yearToPct(year, start, end) {
-    const span = Math.max(1, end - start);
-    return ((year - start) / span) * 100;
+    return yearToUnit(year, start, end) * 100;
   }
 
   /* 隱藏會直接洩漏年分的數字，年號與朝代名予以保留。 */
@@ -405,7 +486,24 @@
     updateMatchCount();
   }
 
+  function syncAxisInputs() {
+    const min = axisMin();
+    const max = axisMax();
+    if (els.rangeStart) {
+      els.rangeStart.min = String(min);
+      els.rangeStart.max = String(max);
+    }
+    if (els.rangeEnd) {
+      els.rangeEnd.min = String(min);
+      els.rangeEnd.max = String(max);
+    }
+    if (state.start < min) state.start = min;
+    if (state.end > max) state.end = max;
+    if (state.start > state.end) state.start = state.end;
+  }
+
   function updateRangeUi() {
+    syncAxisInputs();
     els.rangeText.textContent = formatYear(state.start) + " 至 " + formatYear(state.end);
     els.rangeStart.value = String(state.start);
     els.rangeEnd.value = String(state.end);
@@ -417,8 +515,8 @@
     const wrap = els.rangeSlider;
     if (!wrap) return;
     const width = axisWidth(wrap);
-    const x0 = yearToX(state.start, DATA_MIN, DATA_MAX, width);
-    const x1 = yearToX(state.end, DATA_MIN, DATA_MAX, width);
+    const x0 = yearToX(state.start, axisMin(), axisMax(), width);
+    const x1 = yearToX(state.end, axisMin(), axisMax(), width);
     if (els.rangeThumbStart) els.rangeThumbStart.style.left = x0 + "px";
     if (els.rangeThumbEnd) els.rangeThumbEnd.style.left = x1 + "px";
     if (els.rangeDimLeft) {
@@ -693,7 +791,8 @@
 
   function renderSetupBands() {
     ensureScheme();
-    renderPeriodBands(els.setupPeriodBands, DATA_MIN, DATA_MAX, state.schemeId);
+    syncAxisInputs();
+    renderPeriodBands(els.setupPeriodBands, axisMin(), axisMax(), state.schemeId);
     positionRangeThumbs();
     if (els.setupPeriodCaption) {
       const scheme = periodSchemes()[state.schemeId];
@@ -1172,7 +1271,7 @@
     if (!wrap) return;
     let dragging = null;
     function apply(ev) {
-      const year = pointerYear(ev, wrap, DATA_MIN, DATA_MAX);
+      const year = pointerYear(ev, wrap, axisMin(), axisMax());
       if (dragging === "start") {
         state.start = Math.min(year, state.end);
       } else if (dragging === "end") {
@@ -1189,8 +1288,8 @@
       const rect = wrap.getBoundingClientRect();
       const x = ev.clientX - rect.left;
       const width = rect.width;
-      const x0 = yearToX(state.start, DATA_MIN, DATA_MAX, width);
-      const x1 = yearToX(state.end, DATA_MIN, DATA_MAX, width);
+      const x0 = yearToX(state.start, axisMin(), axisMax(), width);
+      const x1 = yearToX(state.end, axisMin(), axisMax(), width);
       dragging = Math.abs(x - x0) <= Math.abs(x - x1) ? "start" : "end";
       wrap.setPointerCapture(ev.pointerId);
       apply(ev);
