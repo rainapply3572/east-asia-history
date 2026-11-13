@@ -5,7 +5,7 @@
   const PEER_PREFIX = "eayg-tw-";
   const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   const CODE_LEN = 6;
-  const MAX_PLAYERS = 10;
+  const MAX_PLAYERS = 8;
   const NICK_MAX = 12;
   const TIME_OPTIONS = [0, 30, 60, 90];
   const PLAYER_COLORS = [
@@ -33,8 +33,16 @@
     lastReveal: null,
     lastFinal: null,
     started: false,
-    connectBtnMode: "create"
+    connectBtnMode: "create",
+    maxPlayers: 4,
+    listed: false,
+    beat: 0
   };
+
+  const ROOM_TOPIC = "east-asia-history/guess/rooms/v1";
+  const ROOM_BROKER = "wss://broker.hivemq.com:8884/mqtt";
+  const SEARCHING = "正在搜尋公開房間...";
+  const directory = { socket: null, connecting: null, ok: false, rooms: {}, open: false, sweep: 0 };
 
   const ui = {};
 
@@ -317,7 +325,8 @@
       ui.mpPlayerList.appendChild(li);
     });
     if (ui.mpPlayerCount) {
-      ui.mpPlayerCount.textContent = mp.players.length + " / " + MAX_PLAYERS;
+      ui.mpPlayerCount.textContent = mp.players.length + " / " + roomCap();
+    if (isHost() && mp.listed && mp.phase === "lobby") publishRoom("waiting");
     }
   }
 
@@ -356,6 +365,12 @@
     document.body.classList.toggle("mp-guest", mode === "join");
     document.body.classList.toggle("mp-active", mode !== "solo");
     if (ui.mpPanel) ui.mpPanel.hidden = mode === "solo";
+    if (ui.mpPublic) ui.mpPublic.hidden = mode !== "join";
+    if (mode === "join") {
+      ensureBroker();
+      startSweep();
+      renderPublicRooms();
+    }
     if (ui.timeLimitGroup) ui.timeLimitGroup.hidden = mode !== "host";
     if (ui.mpCodeField) ui.mpCodeField.hidden = mode !== "join";
     if (ui.mpConnectBtn) {
@@ -399,6 +414,8 @@
   }
 
   function resetRoom(keepMode) {
+    stopRoomBeats(true);
+    mp.listed = false;
     destroyPeer();
     mp.phase = "idle";
     mp.role = keepMode === "host" || keepMode === "join" ? (keepMode === "host" ? "host" : "guest") : null;
@@ -485,8 +502,8 @@
         try { conn.close(); } catch (e) {}
         return;
       }
-      if (mp.players.length >= MAX_PLAYERS) {
-        send(conn, { type: "join-error", reason: "room-full", message: "房間已滿（最多 " + MAX_PLAYERS + " 人）。" });
+      if (mp.players.length >= roomCap()) {
+        send(conn, { type: "join-error", reason: "room-full", message: "房間已滿" });
         try { conn.close(); } catch (e) {}
         return;
       }
@@ -576,6 +593,183 @@
     return (err && err.message) || "連線失敗，請稍後再試。";
   }
 
+  function roomCap() {
+    var n = Number(mp.maxPlayers);
+    if (Number.isInteger(n) && n >= 2 && n <= MAX_PLAYERS) return n;
+    return 4;
+  }
+
+  function readMaxPlayers() {
+    var n = Number(ui.mpMaxPlayers && ui.mpMaxPlayers.value);
+    if (!Number.isInteger(n) || n < 2 || n > MAX_PLAYERS) return 4;
+    return n;
+  }
+
+  function isPublicChoice() {
+    var on = document.querySelector("#mpVisibility .chip.is-on");
+    return !on || on.getAttribute("data-vis") !== "private";
+  }
+
+  function cleanText(value, max) {
+    return String(value == null ? "" : value)
+      .replace(/[\u0000-\u001F\u007F\u200B-\u200F\u202A-\u202E\u2066-\u2069]/g, "")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, max);
+  }
+
+  function roomSummary() {
+    var st = state();
+    var regions = st && st.regions ? Array.from(st.regions).join("、") : "";
+    var range = $("rangeText") ? $("rangeText").textContent : "";
+    return cleanText((regions || "各地") + " · " + (range || ""), 80);
+  }
+
+  function publishRoom(status) {
+    if (!directory.socket || !directory.socket.alive || !mp.roomCode) return;
+    var payload = {
+      v: 1,
+      code: mp.roomCode,
+      nick: cleanText(mp.nick, 16),
+      players: mp.players.length,
+      max: roomCap(),
+      summary: roomSummary(),
+      status: status === "closed" ? "closed" : "waiting"
+    };
+    try { directory.socket.publish(ROOM_TOPIC, JSON.stringify(payload)); } catch (err) {}
+  }
+
+  function stopRoomBeats(remove) {
+    if (mp.beat) {
+      clearInterval(mp.beat);
+      mp.beat = 0;
+    }
+    if (remove) publishRoom("closed");
+  }
+
+  function startRoomBeats() {
+    stopRoomBeats(false);
+    if (!mp.listed || !isHost() || mp.phase !== "lobby" || !mp.roomCode) return;
+    ensureBroker();
+    publishRoom("waiting");
+    mp.beat = setInterval(function () {
+      if (!mp.listed || mp.phase !== "lobby") {
+        stopRoomBeats(false);
+        return;
+      }
+      publishRoom("waiting");
+    }, 5000);
+  }
+
+  function acceptRoom(data) {
+    if (!data || typeof data !== "object") return;
+    var code = cleanText(data.code, 8).toUpperCase();
+    if (!/^[A-Z0-9]{4,8}$/.test(code)) return;
+    if (data.status === "closed") {
+      delete directory.rooms[code];
+      renderPublicRooms();
+      return;
+    }
+    if (data.status !== "waiting") return;
+    var max = Number(data.max);
+    var players = Number(data.players);
+    if (!Number.isInteger(max) || max < 2 || max > MAX_PLAYERS) return;
+    if (!Number.isInteger(players) || players < 1 || players > max) return;
+    var nick = cleanText(data.nick, 16);
+    var summary = cleanText(data.summary, 80);
+    if (!nick) return;
+    directory.rooms[code] = { code: code, nick: nick, players: players, max: max, summary: summary, seen: Date.now() };
+    renderPublicRooms();
+  }
+
+  function renderPublicRooms() {
+    if (!ui.mpPublicLabel || !ui.mpPublicList) return;
+    var now = Date.now();
+    var rooms = Object.keys(directory.rooms).map(function (key) { return directory.rooms[key]; }).filter(function (room) {
+      return now - room.seen < 15000;
+    }).sort(function (a, b) { return a.code < b.code ? -1 : 1; });
+    var searching = !directory.ok || !rooms.length;
+    ui.mpPublicLabel.textContent = searching ? SEARCHING : rooms.length + " 個房間等待中";
+    if (ui.mpPublicEmpty) {
+      ui.mpPublicEmpty.hidden = !searching;
+      ui.mpPublicEmpty.textContent = SEARCHING;
+    }
+    ui.mpPublicList.textContent = "";
+    if (searching) return;
+    rooms.forEach(function (room) {
+      var li = document.createElement("li");
+      li.className = "public-item";
+      var info = document.createElement("div");
+      var title = document.createElement("strong");
+      title.textContent = room.nick + " · " + room.code;
+      var meta = document.createElement("p");
+      meta.textContent = room.players + " / " + room.max + "　" + room.summary;
+      info.appendChild(title);
+      info.appendChild(meta);
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "ghost";
+      var full = room.players >= room.max;
+      btn.textContent = full ? "已滿" : "加入";
+      btn.disabled = full;
+      btn.addEventListener("click", function () {
+        if (btn.disabled) return;
+        if (ui.mpCodeInput) ui.mpCodeInput.value = room.code;
+        joinRoom(room.code).catch(function () {});
+      });
+      li.appendChild(info);
+      li.appendChild(btn);
+      ui.mpPublicList.appendChild(li);
+    });
+  }
+
+  function ensureBroker() {
+    if (directory.socket && directory.socket.alive) return;
+    if (directory.connecting) return;
+    if (typeof GuessMqtt === "undefined") {
+      directory.ok = false;
+      renderPublicRooms();
+      return;
+    }
+    directory.ok = false;
+    directory.connecting = GuessMqtt.connect(ROOM_BROKER).then(function (socket) {
+      directory.socket = socket;
+      directory.ok = true;
+      directory.connecting = null;
+      socket.onMessage = function (topic, text) {
+        if (topic !== ROOM_TOPIC) return;
+        var data;
+        try { data = JSON.parse(text); } catch (err) { return; }
+        acceptRoom(data);
+      };
+      socket.onClose = function () {
+        directory.ok = false;
+        directory.socket = null;
+        renderPublicRooms();
+        setTimeout(ensureBroker, 8000);
+      };
+      socket.subscribe(ROOM_TOPIC);
+      renderPublicRooms();
+      if (mp.listed && mp.phase === "lobby") publishRoom("waiting");
+    }).catch(function () {
+      directory.connecting = null;
+      directory.ok = false;
+      renderPublicRooms();
+      setTimeout(ensureBroker, 8000);
+    });
+  }
+
+  function startSweep() {
+    if (directory.sweep) return;
+    directory.sweep = setInterval(function () {
+      var now = Date.now();
+      Object.keys(directory.rooms).forEach(function (key) {
+        if (now - directory.rooms[key].seen >= 15000) delete directory.rooms[key];
+      });
+      renderPublicRooms();
+    }, 2000);
+  }
+
   function createRoom(nick) {
     const n = normalizeNick(nick || (ui.mpNick && ui.mpNick.value) || "");
     if (!n) {
@@ -589,6 +783,8 @@
     mp.role = "host";
     mp.phase = "connecting";
     mp.nick = n;
+    mp.maxPlayers = readMaxPlayers();
+    mp.listed = isPublicChoice();
     saveNick(n);
     setMode("host");
     if (ui.mpNick) ui.mpNick.value = n;
@@ -626,8 +822,10 @@
         showRoomUi();
         setStatus("房間已建立，把代碼傳給朋友即可加入。");
         setError("");
+        startRoomBeats();
         return code;
       }).catch((err) => {
+        mp.listed = false;
         mp.phase = "idle";
         setError(err.message || "無法建立房間。");
         setStatus("");
@@ -659,9 +857,11 @@
         showRoomUi();
         setStatus("房間已建立，把代碼傳給朋友即可加入。");
         setError("");
+        startRoomBeats();
         return code;
       }).catch((err) => {
         if (err && err.type === "unavailable-id" && triesLeft > 0) return attempt(triesLeft - 1);
+        mp.listed = false;
         mp.phase = "idle";
         setError(err.message || "無法建立房間。");
         setStatus("");
@@ -969,6 +1169,7 @@
   }
 
   function hostBeginRound() {
+    stopRoomBeats(true);
     const st = state();
     const event = st.queue[st.index];
     mp.phase = "playing";
@@ -1474,6 +1675,7 @@
     showRoomUi();
     setStatus(isHost() ? "可調整設定後再開始下一局。" : "等待房主開始下一局。");
     if (isHost()) broadcast({ type: "return-lobby", players: mp.players, settings: collectSettings(), phase: "lobby" });
+    if (isHost()) startRoomBeats();
   }
 
   function interceptStart() {
@@ -1650,6 +1852,13 @@
     ui.mpCodeField = $("mpCodeField");
     ui.mpCodeInput = $("mpCodeInput");
     ui.mpConnectBtn = $("mpConnectBtn");
+    ui.mpMaxPlayers = $("mpMaxPlayers");
+    ui.mpPublic = $("mpPublic");
+    ui.mpPublicToggle = $("mpPublicToggle");
+    ui.mpPublicBody = $("mpPublicBody");
+    ui.mpPublicLabel = $("mpPublicLabel");
+    ui.mpPublicEmpty = $("mpPublicEmpty");
+    ui.mpPublicList = $("mpPublicList");
     ui.mpRoom = $("mpRoom");
     ui.mpCodeDisplay = $("mpCodeDisplay");
     ui.mpCopyBtn = $("mpCopyBtn");
@@ -1677,6 +1886,25 @@
     ui.adjustBtn = $("adjustBtn");
 
     if (ui.mpNick) ui.mpNick.value = loadNick();
+    document.querySelectorAll("#mpVisibility .chip").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll("#mpVisibility .chip").forEach((other) => {
+          const on = other === btn;
+          other.classList.toggle("is-on", on);
+          other.setAttribute("aria-checked", on ? "true" : "false");
+        });
+      });
+    });
+    if (ui.mpPublicToggle) {
+      ui.mpPublicToggle.addEventListener("click", () => {
+        directory.open = !directory.open;
+        ui.mpPublicToggle.setAttribute("aria-expanded", directory.open ? "true" : "false");
+        if (ui.mpPublicBody) ui.mpPublicBody.hidden = !directory.open;
+      });
+    }
+    window.addEventListener("pagehide", () => {
+      if (isHost() && mp.listed && mp.roomCode) publishRoom("closed");
+    });
 
     $("modeSolo") && $("modeSolo").addEventListener("click", () => {
       if (inRoom() && mp.peer) {

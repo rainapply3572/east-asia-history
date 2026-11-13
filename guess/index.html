@@ -38,12 +38,39 @@
             <span>暱稱</span>
             <input type="text" id="mpNick" maxlength="12" placeholder="怎麼稱呼你" autocomplete="nickname">
           </label>
-          <p class="mp-host-note" id="mpHostNote">房間代碼會在建立後自動產生，無須自行填寫。請把代碼傳給要加入的人。</p>
+          <p class="mp-host-note" id="mpHostNote">房間代碼會在建立後自動產生，無須自行填寫。公開房間會出現在加入頁的清單；私人房間只靠代碼。</p>
+          <div class="mp-host-options" id="mpHostOptions">
+            <div class="chips" id="mpVisibility" role="radiogroup" aria-label="房間是否公開">
+              <button type="button" class="chip is-on" data-vis="public" aria-checked="true">公開</button>
+              <button type="button" class="chip" data-vis="private" aria-checked="false">私人</button>
+            </div>
+            <label class="mp-field">
+              <span>最高玩家數</span>
+              <select id="mpMaxPlayers" aria-label="最高玩家數">
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4" selected>4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+              </select>
+            </label>
+          </div>
           <label class="mp-field" id="mpCodeField" hidden>
             <span>房間代碼</span>
             <input type="text" id="mpCodeInput" maxlength="8" placeholder="例如 7K3M9P" autocomplete="off" spellcheck="false">
           </label>
           <button type="button" class="primary" id="mpConnectBtn">建立房間</button>
+          <section class="public-rooms" id="mpPublic" hidden>
+            <button type="button" class="public-toggle" id="mpPublicToggle" aria-expanded="false" aria-controls="mpPublicBody">
+              <span id="mpPublicLabel">正在搜尋公開房間...</span>
+            </button>
+            <div id="mpPublicBody" hidden>
+              <p class="public-empty" id="mpPublicEmpty">正在搜尋公開房間...</p>
+              <ul class="public-list" id="mpPublicList"></ul>
+            </div>
+          </section>
         </div>
         <div class="mp-room" id="mpRoom" hidden>
           <div class="mp-code-row">
@@ -304,6 +331,7 @@
 
   <script src="vendor/leaflet.js"></script>
   <script src="vendor/peerjs.min.js"></script>
+  <script src="vendor/mqtt-ws.js"></script>
   <script src="events.js"></script>
   <script src="periods.js"></script>
   <script src="app.js"></script>
