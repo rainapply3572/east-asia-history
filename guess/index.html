@@ -64,7 +64,15 @@
           <button type="button" class="primary" id="mpConnectBtn">建立房間</button>
           <section class="public-rooms" id="mpPublic" hidden>
             <button type="button" class="public-toggle" id="mpPublicToggle" aria-expanded="false" aria-controls="mpPublicBody">
-              <span id="mpPublicLabel">正在搜尋公開房間...</span>
+              <span class="public-chevron" aria-hidden="true">▸</span>
+              <span class="public-toggle-main">
+                <span class="public-toggle-title">公開房間</span>
+                <span class="public-hint" id="mpPublicHint">點擊展開</span>
+              </span>
+              <span class="public-badge">
+                <span class="public-spinner" aria-hidden="true"></span>
+                <span id="mpPublicLabel">正在搜尋公開房間...</span>
+              </span>
             </button>
             <div id="mpPublicBody" hidden>
               <p class="public-empty" id="mpPublicEmpty">正在搜尋公開房間...</p>

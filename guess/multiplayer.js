@@ -690,6 +690,9 @@
     }).sort(function (a, b) { return a.code < b.code ? -1 : 1; });
     var searching = !directory.ok || !rooms.length;
     ui.mpPublicLabel.textContent = searching ? SEARCHING : rooms.length + " 個房間等待中";
+    if (ui.mpPublicToggle) ui.mpPublicToggle.classList.toggle("is-searching", searching);
+    var hint = $("mpPublicHint");
+    if (hint) hint.textContent = directory.open ? "收合" : "點擊展開";
     if (ui.mpPublicEmpty) {
       ui.mpPublicEmpty.hidden = !searching;
       ui.mpPublicEmpty.textContent = SEARCHING;
@@ -1900,6 +1903,7 @@
         directory.open = !directory.open;
         ui.mpPublicToggle.setAttribute("aria-expanded", directory.open ? "true" : "false");
         if (ui.mpPublicBody) ui.mpPublicBody.hidden = !directory.open;
+        renderPublicRooms();
       });
     }
     window.addEventListener("pagehide", () => {
