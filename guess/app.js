@@ -758,6 +758,41 @@
     return window.PERIOD_SCHEMES || {};
   }
 
+  function periodGroupKey(event) {
+    const schemeId = REGION_TO_SCHEME[eventPrimaryRegion(event)] || "";
+    const scheme = periodSchemes()[schemeId];
+    const region = eventPrimaryRegion(event) || "none";
+    if (!scheme || !Array.isArray(scheme.periods) || !Number.isFinite(event.year)) {
+      return region + ":none";
+    }
+    const hits = scheme.periods.filter((period) => event.year >= period.start && event.year <= period.end);
+    const main = hits.filter((period) => period.row !== 1);
+    const list = (main.length ? main : hits).slice();
+    list.sort((a, b) => (a.end - a.start) - (b.end - b.start) || a.start - b.start);
+    const period = list[0];
+    if (!period) return region + ":none";
+    return schemeId + ":" + period.id;
+  }
+
+  function pickBalancedQueue(pool, count) {
+    const buckets = new Map();
+    pool.forEach((event) => {
+      const key = periodGroupKey(event);
+      if (!buckets.has(key)) buckets.set(key, []);
+      buckets.get(key).push(event);
+    });
+    const queue = [];
+    while (queue.length < count) {
+      const live = [...buckets.keys()].filter((key) => buckets.get(key).length);
+      if (!live.length) break;
+      const key = live[Math.floor(Math.random() * live.length)];
+      const list = buckets.get(key);
+      const index = Math.floor(Math.random() * list.length);
+      queue.push(list.splice(index, 1)[0]);
+    }
+    return queue;
+  }
+
   function availableSchemeIds() {
     const selected = [];
     state.regions.forEach((r) => {
@@ -965,7 +1000,7 @@
       return;
     }
     state.pool = pool;
-    state.queue = shuffle(pool).slice(0, state.rounds);
+    state.queue = pickBalancedQueue(pool, state.rounds);
     state.index = 0;
     state.score = 0;
     state.streak = 0;
@@ -1494,6 +1529,8 @@
     isTaiwanPrehistoryEvent: isTaiwanPrehistoryEvent,
     spanYears: spanYears,
     shuffle: shuffle,
+    pickBalancedQueue: pickBalancedQueue,
+    periodGroupKey: periodGroupKey,
     ensureScheme: ensureScheme,
     renderSchemeSwitch: renderSchemeSwitch,
     resetCompareVisuals: resetCompareVisuals,

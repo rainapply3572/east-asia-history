@@ -926,7 +926,7 @@
     }
     setError("");
     st.pool = pool;
-    st.queue = Y().shuffle(pool).slice(0, st.rounds);
+    st.queue = Y().pickBalancedQueue(pool, st.rounds);
     st.index = 0;
     st.score = 0;
     st.streak = 0;
