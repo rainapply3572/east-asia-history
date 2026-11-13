@@ -23,40 +23,6 @@
       <p class="tagline">這裡列出猜年遊戲的全部題目。年份和朝代預設隱藏。新題與修改都要等維護者核准後才會進遊戲。</p>
     </header>
 
-    <section class="panel bank-tools" aria-label="篩選題目">
-      <div class="bank-search">
-        <label for="bankSearch">搜尋</label>
-        <input type="search" id="bankSearch" placeholder="搜尋題目或敘述" autocomplete="off">
-      </div>
-      <div class="bank-filters">
-        <label>地區
-          <select id="bankRegion"></select>
-        </label>
-        <label>朝代／時期
-          <select id="bankPeriod"></select>
-        </label>
-        <label>排序
-          <select id="bankSort">
-            <option value="year-asc">年份由早到晚</option>
-            <option value="year-desc">年份由晚到早</option>
-          </select>
-        </label>
-        <label class="toggle">
-          <input type="checkbox" id="bankCurriculum">
-          <span>只看課內</span>
-        </label>
-        <label class="toggle">
-          <input type="checkbox" id="bankSpoilers">
-          <span>顯示年份與朝代</span>
-        </label>
-      </div>
-      <p class="bank-count" id="bankCount">載入中…</p>
-    </section>
-
-    <section aria-label="題目列表">
-      <div class="bank-list" id="bankList"></div>
-    </section>
-
     <section class="panel bank-form" id="submitSection" aria-label="提案新題">
       <h2>題庫申請</h2>
       <p class="curriculum-hint">事件敘述是玩家作答前會讀到的文字，請不要寫出朝代、年號、世紀或西元年分。送出後會開啟 GitHub 新議題，需要 GitHub 帳號。維護者看過並加上「核准」之後，題目才會加入遊戲。</p>
@@ -103,6 +69,40 @@
           送出申請。
         </p>
       </form>
+    </section>
+
+    <section class="panel bank-tools" aria-label="篩選題目">
+      <div class="bank-search">
+        <label for="bankSearch">搜尋</label>
+        <input type="search" id="bankSearch" placeholder="搜尋題目或敘述" autocomplete="off">
+      </div>
+      <div class="bank-filters">
+        <label>地區
+          <select id="bankRegion"></select>
+        </label>
+        <label>朝代／時期
+          <select id="bankPeriod"></select>
+        </label>
+        <label>排序
+          <select id="bankSort">
+            <option value="year-asc">年份由早到晚</option>
+            <option value="year-desc">年份由晚到早</option>
+          </select>
+        </label>
+        <label class="toggle">
+          <input type="checkbox" id="bankCurriculum">
+          <span>只看課內</span>
+        </label>
+        <label class="toggle">
+          <input type="checkbox" id="bankSpoilers">
+          <span>顯示年份與朝代</span>
+        </label>
+      </div>
+      <p class="bank-count" id="bankCount">載入中…</p>
+    </section>
+
+    <section aria-label="題目列表">
+      <div class="bank-list" id="bankList"></div>
     </section>
   </div>
 

@@ -1382,7 +1382,8 @@ body.page-bank {
 .bank-answer.is-hidden { color: var(--ink-soft); font-weight: 600; }
 .bank-edit { flex: 0 0 auto; min-height: 40px; }
 .bank-empty { text-align: center; color: var(--ink-soft); }
-.bank-form { padding: 18px 16px 20px; margin-top: 22px; }
+.bank-form { padding: 18px 16px 20px; margin-top: 8px; }
+.bank-tools { margin-top: 16px; }
 .bank-form h2 { margin: 0 0 8px; font-size: 22px; }
 .bank-field { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; font-size: 13px; font-weight: 700; color: var(--ink-soft); }
 .bank-year-row, .bank-split { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: flex-end; }
