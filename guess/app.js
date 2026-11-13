@@ -8,7 +8,7 @@
   const SCORE_TAU_RATIO = 0.08;
   const STORAGE_KEY = "eastAsiaYearGuess.bestScores";
   const FALLBACK_MIN = -1046;
-  const FALLBACK_MAX = 1999;
+  const FALLBACK_MAX = 2020;
   const yearSpan = (Array.isArray(window.EVENTS) ? window.EVENTS : []).reduce((span, event) => {
     if (!event || !Number.isFinite(event.year)) return span;
     if (event.year < span.min) span.min = event.year;
@@ -185,9 +185,30 @@
     { from: HIST_START, to: Infinity, weight: 0.69 }
   ];
 
+  function taiwanTimeline() {
+    const onlyTaiwan = state.regions.size === 1 && state.regions.has("臺灣");
+    return state.schemeId === "臺灣" || onlyTaiwan;
+  }
+
   function axisMin() {
-    if (state.schemeId === "臺灣") return Math.min(DATA_MIN, PALEO_START);
-    return DATA_MIN;
+    return taiwanTimeline() ? Math.min(DATA_MIN, PALEO_START) : DATA_MIN;
+  }
+
+  function presetSpan(preset) {
+    if (!preset || preset.id === "custom") return null;
+    const start = preset.id === "all" || preset.id === "ancient" ? axisMin() : preset.start;
+    return { start: start, end: preset.end };
+  }
+
+  function syncPresetToFloor() {
+    if (state.presetId !== "all" && state.presetId !== "ancient") {
+      if (state.start < axisMin()) state.start = axisMin();
+      return;
+    }
+    const span = presetSpan(PRESETS.find((preset) => preset.id === state.presetId));
+    if (!span) return;
+    state.start = span.start;
+    state.end = span.end;
   }
 
   function axisMax() {
@@ -434,10 +455,11 @@
     const preset = PRESETS.find((p) => p.id === id);
     if (!preset) return;
     if (preset.id !== "custom") {
-      state.start = preset.start;
-      state.end = preset.end;
-      els.rangeStart.value = String(preset.start);
-      els.rangeEnd.value = String(preset.end);
+      const span = presetSpan(preset);
+      state.start = span.start;
+      state.end = span.end;
+      els.rangeStart.value = String(span.start);
+      els.rangeEnd.value = String(span.end);
     }
     if (!fromSlider) state.presetId = preset.id;
     renderPresetChips();
@@ -479,7 +501,10 @@
     }
     state.start = a;
     state.end = b;
-    const match = PRESETS.find((p) => p.id !== "custom" && p.start === a && p.end === b);
+    const match = PRESETS.find((preset) => {
+      const span = presetSpan(preset);
+      return span && span.start === a && span.end === b;
+    });
     state.presetId = match ? match.id : "custom";
     renderPresetChips();
     updateRangeUi();
@@ -503,6 +528,8 @@
   }
 
   function updateRangeUi() {
+    ensureScheme();
+    syncPresetToFloor();
     syncAxisInputs();
     els.rangeText.textContent = formatYear(state.start) + " 至 " + formatYear(state.end);
     els.rangeStart.value = String(state.start);
@@ -531,6 +558,12 @@
   }
 
   function updateMatchCount() {
+    ensureScheme();
+    syncPresetToFloor();
+    syncAxisInputs();
+    if (els.rangeText) els.rangeText.textContent = formatYear(state.start) + " 至 " + formatYear(state.end);
+    if (els.rangeStart) els.rangeStart.value = String(state.start);
+    if (els.rangeEnd) els.rangeEnd.value = String(state.end);
     if (window.YearGuessMp) YearGuessMp.onSettingsChanged();
     const pool = filteredEvents();
     const n = pool.length;
@@ -715,9 +748,11 @@
     if (avail.indexOf(id) === -1) return;
     state.schemeId = id;
     if (fromUser) state.schemeUserPicked = true;
+    syncPresetToFloor();
     renderSchemeSwitch(els.setupSchemeSwitch);
     renderSchemeSwitch(els.guessSchemeSwitch);
-    renderSetupBands();
+    updateRangeUi();
+    updateMatchCount();
     renderGuessBands();
     renderRevealBands();
   }

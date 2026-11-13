@@ -10,7 +10,7 @@
     regions: new Set(REGIONS),
     presetId: "all",
     start: -1046,
-    end: 1999,
+    end: 2020,
     rounds: 5,
     curriculumOnly: false,
     hard: false,
@@ -24,7 +24,7 @@
     revealed: false,
     history: [],
     dataMin: -1046,
-    dataMax: 1999
+    dataMax: 2020
   };
 
   var map = null;
@@ -72,7 +72,7 @@
 
   function bounds() {
     var min = -1046;
-    var max = 1999;
+    var max = 2020;
     events().forEach(function (event) {
       if (!Number.isFinite(event.year)) return;
       if (event.year < min) min = event.year;

@@ -33,7 +33,7 @@ window.PERIOD_SCHEMES = {
       { id: "ming", label: "明", short: "明", start: 1368, end: 1644, visStart: 1368, visEnd: 1644, color: "#7a1f3a" },
       { id: "qing", label: "清", short: "清", start: 1644, end: 1912, visStart: 1644, visEnd: 1912, color: "#3d5a80" },
       { id: "roc", label: "中華民國", short: "民國", start: 1912, end: 1949, visStart: 1912, visEnd: 1949, color: "#2b6b62" },
-      { id: "prc", label: "中華人民共和國", short: "現代", start: 1949, end: 1999, visStart: 1949, visEnd: 1999, color: "#5b534a" }
+      { id: "prc", label: "中華人民共和國", short: "現代", start: 1949, end: 2020, visStart: 1949, visEnd: 2020, color: "#5b534a" }
     ]
   },
   "日本": {
@@ -52,7 +52,7 @@ window.PERIOD_SCHEMES = {
       { id: "meiji", label: "明治", short: "明治", start: 1868, end: 1912, visStart: 1868, visEnd: 1912, color: "#9e2b1f" },
       { id: "taisho", label: "大正", short: "大正", start: 1912, end: 1926, visStart: 1912, visEnd: 1926, color: "#7a5c8a" },
       { id: "showa", label: "昭和", short: "昭和", start: 1926, end: 1989, visStart: 1926, visEnd: 1989, color: "#4a3b2f" },
-      { id: "heisei", label: "平成", short: "平成", start: 1989, end: 1999, visStart: 1989, visEnd: 1999, color: "#2b6b62", note: "平成至 2019 年；本站資料迄於 1999 年。" }
+      { id: "heisei", label: "平成", short: "平成", start: 1989, end: 2020, visStart: 1989, visEnd: 2020, color: "#2b6b62", note: "平成至 2019 年；時間軸畫至 2020 年。" }
     ]
   },
   "朝鮮": {
@@ -66,7 +66,7 @@ window.PERIOD_SCHEMES = {
       { id: "goryeo", label: "高麗", short: "高麗", start: 918, end: 1392, visStart: 918, visEnd: 1392, color: "#7a5c8a" },
       { id: "joseon", label: "朝鮮", short: "朝鮮", start: 1392, end: 1910, visStart: 1392, visEnd: 1910, color: "#3d5a80", note: "1897 年起國號亦作大韓帝國，至 1910 年。" },
       { id: "ilje", label: "日治", short: "日治", start: 1910, end: 1945, visStart: 1910, visEnd: 1945, color: "#8c4a3a" },
-      { id: "kr-modern", label: "現代", short: "現代", start: 1945, end: 1999, visStart: 1945, visEnd: 1999, color: "#5b534a" }
+      { id: "kr-modern", label: "現代", short: "現代", start: 1945, end: 2020, visStart: 1945, visEnd: 2020, color: "#5b534a" }
     ]
   },
   "越南": {
@@ -82,7 +82,7 @@ window.PERIOD_SCHEMES = {
       { id: "le", label: "後黎", short: "後黎", start: 1428, end: 1788, visStart: 1428, visEnd: 1788, color: "#3d5a80" },
       { id: "tay-son", label: "西山", short: "西山", start: 1788, end: 1802, visStart: 1788, visEnd: 1802, color: "#9e4b6e" },
       { id: "nguyen", label: "阮", short: "阮", start: 1802, end: 1945, visStart: 1802, visEnd: 1945, color: "#4a3b2f" },
-      { id: "vn-modern", label: "現代", short: "現代", start: 1945, end: 1999, visStart: 1945, visEnd: 1999, color: "#5b534a" }
+      { id: "vn-modern", label: "現代", short: "現代", start: 1945, end: 2020, visStart: 1945, visEnd: 2020, color: "#5b534a" }
     ]
   },
   "臺灣": {
@@ -95,7 +95,7 @@ window.PERIOD_SCHEMES = {
       { id: "koxinga", label: "明鄭", short: "明鄭", start: 1662, end: 1683, visStart: 1662, visEnd: 1683, color: "#8c4a3a" },
       { id: "qing-tw", label: "清", short: "清", start: 1683, end: 1895, visStart: 1683, visEnd: 1895, color: "#3e4a59" },
       { id: "jp-tw", label: "日治", short: "日治", start: 1895, end: 1945, visStart: 1895, visEnd: 1945, color: "#9e2b1f" },
-      { id: "tw-postwar", label: "戰後", short: "戰後", start: 1945, end: 1999, visStart: 1945, visEnd: 1999, color: "#2b6b62" }
+      { id: "tw-postwar", label: "戰後", short: "戰後", start: 1945, end: 2020, visStart: 1945, visEnd: 2020, color: "#2b6b62" }
     ]
   },
   "蒙古": {
@@ -109,7 +109,7 @@ window.PERIOD_SCHEMES = {
       { id: "mongol", label: "大蒙古國", short: "蒙古", start: 1206, end: 1368, visStart: 1206, visEnd: 1368, color: "#4a3b2f" },
       { id: "northern-yuan", label: "北元", short: "北元", start: 1368, end: 1635, visStart: 1368, visEnd: 1636, color: "#3d5a80" },
       { id: "qing-mn", label: "清屬", short: "清屬", start: 1636, end: 1911, visStart: 1636, visEnd: 1911, color: "#3e4a59", note: "後金／清 1636 年改國號，喀爾喀於 1691 年臣屬。" },
-      { id: "mn-modern", label: "現代", short: "現代", start: 1911, end: 1999, visStart: 1911, visEnd: 1999, color: "#2b6b62" }
+      { id: "mn-modern", label: "現代", short: "現代", start: 1911, end: 2020, visStart: 1911, visEnd: 2020, color: "#2b6b62" }
     ]
   }
 };

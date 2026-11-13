@@ -1,6 +1,6 @@
 (() => {
   const YEAR_MIN = -1046;
-  const YEAR_MAX = 2000;
+  const YEAR_MAX = 2020;
   const REGIONS = ["中國", "日本", "朝鮮半島", "臺灣", "蒙古", "越南"];
   const CATEGORIES = ["政治", "戰爭", "文化", "外交", "宗教", "科技", "經濟", "社會"];
   const CATEGORY_COLORS = {
