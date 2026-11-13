@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="依線索從模糊到明確，猜出東亞歷史事件。">
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+  <title>線索猜事件</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../guess/vendor/leaflet.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app">
+    <section class="screen" id="screenStart" aria-label="遊戲設定">
+      <header class="hero">
+        <p class="hero-links">
+          <a class="site-link" href="../">東亞歷史時空圖</a>
+          <a class="site-link" href="../guess/">東亞歷史猜年</a>
+        </p>
+        <p class="eyebrow">Clue the Event</p>
+        <h1>線索猜事件</h1>
+        <p class="tagline">線索會一條一條揭開，從模糊到明確。用越少的線索猜中事件，分數越高。</p>
+      </header>
+
+      <form class="panel setup" id="setupForm" action="javascript:void(0)">
+        <div class="filter-group">
+          <h2>地區</h2>
+          <div class="chips" id="regionFilters" role="group" aria-label="選擇地區"></div>
+        </div>
+        <div class="filter-group">
+          <h2>年代範圍</h2>
+          <div class="chips" id="presetFilters" role="group" aria-label="年代範圍"></div>
+          <p class="range-readout">自訂範圍 <strong id="rangeText">—</strong></p>
+          <div class="year-pair">
+            <label>起始年
+              <input type="number" id="yearStart" inputmode="numeric" step="1">
+            </label>
+            <label>結束年
+              <input type="number" id="yearEnd" inputmode="numeric" step="1">
+            </label>
+          </div>
+        </div>
+        <div class="filter-group">
+          <h2>回合數</h2>
+          <div class="chips" id="roundFilters" role="radiogroup" aria-label="回合數"></div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="curriculumOnly">
+          <span>僅課內題</span>
+        </label>
+        <p class="hint">開啟後只出符合國中歷史課綱（108課綱）的題目，包含臺灣史，以及中國與東亞相關單元。</p>
+        <label class="toggle">
+          <input type="checkbox" id="hardMode">
+          <span>困難模式</span>
+        </label>
+        <p class="hint">預設從四個選項裡選。困難模式改為在全部事件名稱裡搜尋，沒有選項可刪。</p>
+        <p class="match" id="matchCount">符合事件：—</p>
+        <p class="best" id="bestHint"></p>
+        <p class="error" id="setupError" hidden></p>
+        <button type="submit" class="primary" id="startBtn">開始遊戲</button>
+      </form>
+    </section>
+
+    <section class="screen" id="screenPlay" hidden aria-label="遊戲進行中">
+      <header class="play-bar">
+        <div>
+          <p class="eyebrow">線索猜事件</p>
+          <p class="play-stats"><span id="roundLabel">1 / 5</span>　得分 <strong id="liveScore">0</strong></p>
+        </div>
+        <button type="button" class="ghost" id="quitBtn">結束本局</button>
+      </header>
+
+      <article class="panel clue-card" id="clueCard">
+        <p class="clue-kicker" id="clueKicker">第 1 條線索</p>
+        <h2 id="clueTitle">地區與大約的世紀</h2>
+        <p class="clue-text" id="clueText"></p>
+        <div id="mapSlot" hidden>
+          <div id="clueMap" role="application" aria-label="事件地點地圖"></div>
+        </div>
+        <p class="points-left" id="pointsLeft">此刻猜中可得 5,000 分</p>
+      </article>
+
+      <div class="panel answer-box" id="choiceBox">
+        <h2>選出事件</h2>
+        <div class="choices" id="choices"></div>
+      </div>
+
+      <div class="panel answer-box" id="searchBox" hidden>
+        <h2>搜尋事件名稱</h2>
+        <label class="search-label" for="searchInput">輸入後從清單點選</label>
+        <input type="search" id="searchInput" autocomplete="off" placeholder="例如 牧野、鄭成功">
+        <ul class="suggest" id="suggestList" hidden></ul>
+        <p class="error" id="searchError" hidden></p>
+      </div>
+
+      <article class="panel reveal" id="revealCard" hidden>
+        <p class="clue-kicker" id="revealVerdict">猜中了</p>
+        <h2 id="revealTitle"></h2>
+        <p class="reveal-meta" id="revealMeta"></p>
+        <p class="clue-text" id="revealDesc"></p>
+        <div id="revealMapSlot"></div>
+        <p class="points-left" id="revealPoints"></p>
+        <button type="button" class="primary" id="nextBtn">下一題</button>
+      </article>
+    </section>
+
+    <section class="screen" id="screenResult" hidden aria-label="本局結算">
+      <header class="hero compact">
+        <p class="eyebrow">本局結束</p>
+        <h1>線索猜事件</h1>
+      </header>
+      <div class="panel result">
+        <p class="result-label">總分</p>
+        <p class="result-score" id="resultScore">0</p>
+        <p class="result-max" id="resultMax"></p>
+        <p class="best" id="resultRecord" hidden></p>
+        <p class="share-line" id="shareEmojis"></p>
+        <pre class="share-text" id="shareText"></pre>
+        <button type="button" class="ghost" id="copyBtn">複製分享文字</button>
+        <p class="hint" id="copyHint"></p>
+        <h2>各回合</h2>
+        <ol class="result-list" id="resultList"></ol>
+        <div class="result-actions">
+          <button type="button" class="primary" id="againBtn">再玩一局</button>
+          <button type="button" class="ghost" id="backBtn">調整設定</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="../guess/vendor/leaflet.js"></script>
+  <script src="../guess/events.js"></script>
+  <script src="clues.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

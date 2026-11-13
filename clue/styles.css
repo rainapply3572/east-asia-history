@@ -1,0 +1,187 @@
+:root {
+  --ink: #1c1814;
+  --ink-soft: #5b534a;
+  --paper: #f4efe6;
+  --paper-2: #fffaf3;
+  --line: #e2d8c8;
+  --cinnabar: #9e2b1f;
+  --cinnabar-deep: #7a1f16;
+  --gold: #b8893d;
+  --gold-soft: #e8d3a4;
+  --shadow: 0 16px 40px rgba(40, 28, 16, 0.12);
+  --radius: 16px;
+  font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  color: var(--ink);
+  background:
+    radial-gradient(ellipse at 50% 0%, #fbf7f0 0%, var(--paper) 55%),
+    var(--paper);
+  min-height: 100%;
+}
+.app { width: min(760px, calc(100% - 28px)); margin: 0 auto; padding: 20px 0 48px; }
+.screen[hidden] { display: none !important; }
+.hero { text-align: center; padding: 12px 8px 8px; }
+.hero.compact { padding-bottom: 0; }
+.hero-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 16px; margin: 0 0 8px; }
+.site-link {
+  color: var(--cinnabar-deep);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+}
+.site-link:hover, .site-link:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
+.eyebrow {
+  margin: 0 0 4px;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 600;
+}
+h1 {
+  margin: 0;
+  font-family: "Noto Serif TC", serif;
+  font-size: 32px;
+  letter-spacing: 0.06em;
+}
+h2 { margin: 0 0 8px; font-size: 16px; letter-spacing: 0.08em; color: var(--ink-soft); }
+.tagline { margin: 8px auto 0; max-width: 36em; color: var(--ink-soft); line-height: 1.6; }
+.panel {
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset, var(--shadow);
+  padding: 18px 16px 16px;
+  margin-top: 14px;
+}
+.filter-group + .filter-group { margin-top: 16px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip, .primary, .ghost, .choice {
+  font: inherit;
+  cursor: pointer;
+  border-radius: 999px;
+}
+.chip {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+  padding: 8px 12px;
+  font-size: 14px;
+  min-height: 40px;
+}
+.chip[aria-pressed="true"], .chip[aria-checked="true"] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: #fff;
+}
+.primary, .ghost { padding: 10px 18px; font-weight: 700; min-height: 44px; }
+.primary { border: 0; background: var(--cinnabar); color: #fffaf3; }
+.primary:hover { background: var(--cinnabar-deep); }
+.primary:disabled { background: #c9bdb0; cursor: not-allowed; }
+.ghost { border: 1px solid var(--line); background: #fff; color: var(--ink); }
+.toggle { display: flex; align-items: center; gap: 8px; margin-top: 14px; font-weight: 700; min-height: 44px; }
+.toggle input { width: 18px; height: 18px; accent-color: var(--cinnabar); }
+.hint, .match, .best, .error, .points-left, .reveal-meta, .result-max, .result-label {
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.match { text-align: center; font-size: 15px; }
+.best { text-align: center; color: var(--gold); min-height: 1.2em; }
+.error { color: var(--cinnabar); text-align: center; }
+.setup .primary { display: block; width: min(100%, 280px); margin: 8px auto 0; }
+.year-pair { display: flex; gap: 10px; margin-top: 8px; }
+.year-pair label { flex: 1; display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 700; color: var(--ink-soft); }
+input[type="number"], input[type="search"] {
+  font: inherit;
+  font-size: 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #fff;
+  color: var(--ink);
+  width: 100%;
+}
+.play-bar { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding-top: 8px; }
+.play-stats { margin: 0; font-size: 14px; }
+.clue-kicker { margin: 0 0 4px; color: var(--gold); font-weight: 700; letter-spacing: 0.08em; font-size: 13px; }
+.clue-card h2, .reveal h2 { color: var(--ink); letter-spacing: 0; font-family: "Noto Serif TC", serif; font-size: 26px; line-height: 1.35; }
+.clue-text { font-size: 16px; line-height: 1.7; margin: 8px 0; }
+#mapSlot, #revealMapSlot { margin-top: 8px; }
+#clueMap { height: 220px; border-radius: 12px; background: #ead9bf; }
+.pin {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--cinnabar);
+  border: 3px solid #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.28);
+}
+.choices { display: flex; flex-direction: column; gap: 8px; }
+.choice {
+  text-align: left;
+  border: 1px solid var(--line);
+  background: #fff;
+  padding: 12px 14px;
+  min-height: 48px;
+  line-height: 1.45;
+}
+.choice:hover { border-color: var(--cinnabar); }
+.choice:disabled { cursor: default; opacity: 0.55; }
+.choice.is-wrong { border-color: var(--cinnabar); background: #f8e7e3; }
+.choice.is-right { border-color: #2b6b62; background: #e5f2ef; }
+.search-label { display: block; font-size: 12px; font-weight: 700; color: var(--ink-soft); margin-bottom: 6px; }
+.suggest {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+}
+.suggest button {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: #fff;
+  font: inherit;
+  padding: 12px 14px;
+  min-height: 44px;
+  cursor: pointer;
+}
+.suggest li:last-child button { border-bottom: 0; }
+.suggest button:hover, .suggest button:focus-visible { background: #f6efe6; }
+.result { text-align: center; }
+.result-score { margin: 0; font-family: "Noto Serif TC", serif; font-size: 56px; color: var(--cinnabar); }
+.share-line { font-size: 28px; letter-spacing: 0.12em; margin: 8px 0; }
+.share-text {
+  text-align: left;
+  white-space: pre-wrap;
+  background: #fff;
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  font-family: inherit;
+}
+.result-list { text-align: left; padding-left: 1.2em; }
+.result-list li { margin: 8px 0; line-height: 1.5; }
+.result-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 12px; }
+.leaflet-container { font-family: inherit; }
+@media (max-width: 640px) {
+  h1 { font-size: 26px; }
+  .clue-card h2, .reveal h2 { font-size: 22px; }
+  .setup .primary, .choice, #copyBtn { width: 100%; }
+  .play-bar { align-items: flex-start; }
+  .play-bar .ghost { width: auto; flex: 0 0 auto; }
+  .play-stats { white-space: nowrap; }
+  .result-actions .primary, .result-actions .ghost { width: auto; flex: 1 1 40%; }
+}
