@@ -92,7 +92,7 @@ window.PERIOD_SCHEMES = {
       { id: "tw-neolithic", label: "新石器", short: "新石", start: -5000, end: 0, visStart: -5000, visEnd: 1, color: "#c4a574", note: "新石器時代，西元前 5000 年至西元前後（約兩千年前）。" },
       { id: "tw-metal", label: "金屬器", short: "金屬", start: 1, end: 1623, visStart: 1, visEnd: 1624, color: "#5a6b3d", note: "金屬器時代，約兩千年前至 1624 年大航海時代開始。右緣與荷西相接。" },
       { id: "dutch-spanish", label: "荷西", short: "荷西", start: 1624, end: 1662, visStart: 1624, visEnd: 1662, color: "#3d5a80", note: "荷蘭 1624–1662 年，西班牙 1626–1642 年據北部。" },
-      { id: "koxinga", label: "明鄭", short: "明鄭", start: 1662, end: 1683, visStart: 1662, visEnd: 1683, color: "#8c4a3a" },
+      { id: "koxinga", label: "鄭氏時期", short: "鄭氏", start: 1662, end: 1683, visStart: 1662, visEnd: 1683, color: "#8c4a3a" },
       { id: "qing-tw", label: "清", short: "清", start: 1683, end: 1895, visStart: 1683, visEnd: 1895, color: "#3e4a59" },
       { id: "jp-tw", label: "日治", short: "日治", start: 1895, end: 1945, visStart: 1895, visEnd: 1945, color: "#9e2b1f" },
       { id: "tw-postwar", label: "戰後", short: "戰後", start: 1945, end: 2020, visStart: 1945, visEnd: 2020, color: "#2b6b62" }

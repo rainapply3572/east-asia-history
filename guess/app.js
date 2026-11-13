@@ -11,7 +11,9 @@
   const FALLBACK_MAX = 2020;
   const yearSpan = (Array.isArray(window.EVENTS) ? window.EVENTS : []).reduce((span, event) => {
     if (!event || !Number.isFinite(event.year)) return span;
-    if (event.year < span.min) span.min = event.year;
+    // Taiwan prehistoric dates sit before the shared axis. They must not pull other regions backward.
+    const deepTaiwan = event.region === "臺灣" && event.year < FALLBACK_MIN;
+    if (!deepTaiwan && event.year < span.min) span.min = event.year;
     if (event.year > span.max) span.max = event.year;
     return span;
   }, { min: FALLBACK_MIN, max: FALLBACK_MAX });
@@ -353,8 +355,46 @@
     return Math.max(1, state.end - state.start);
   }
 
-  function scoreForDiff(diff) {
+  const TAIWAN_PREHISTORY = [
+    { id: "tw-paleolithic", label: "舊石器時代", start: -28000, end: -5001 },
+    { id: "tw-neolithic", label: "新石器時代", start: -5000, end: 0 },
+    { id: "tw-metal", label: "金屬器時代", start: 1, end: 1623 }
+  ];
+
+  function taiwanPrehistoryEra(year) {
+    if (!Number.isFinite(year)) return null;
+    return TAIWAN_PREHISTORY.find((era) => year >= era.start && year <= era.end) || null;
+  }
+
+  function isTaiwanPrehistoryEvent(event) {
+    if (!event || event.region !== "臺灣" || !Number.isFinite(event.year)) return false;
+    if (!taiwanPrehistoryEra(event.year)) return false;
+    if (event.unit && event.unit !== "史前臺灣與原住民族社會") return false;
+    return event.year < 1624;
+  }
+
+  function prehistoryEraNote(event, guess) {
+    if (!isTaiwanPrehistoryEvent(event) || !Number.isFinite(guess) || guess === event.year) return "";
+    const answerEra = taiwanPrehistoryEra(event.year);
+    const guessEra = taiwanPrehistoryEra(guess);
+    if (!answerEra || !guessEra || answerEra.id !== guessEra.id) return "";
+    return "同為" + answerEra.label;
+  }
+
+  function sameEraPrehistoryScore(event, guess) {
+    if (!isTaiwanPrehistoryEvent(event) || !Number.isFinite(guess)) return null;
+    const answerEra = taiwanPrehistoryEra(event.year);
+    const guessEra = taiwanPrehistoryEra(guess);
+    if (!answerEra || !guessEra || answerEra.id !== guessEra.id) return null;
+    const span = Math.max(1, answerEra.end - answerEra.start);
+    const ratio = Math.min(1, Math.abs(guess - event.year) / span);
+    return MAX_POINTS - Math.round(800 * ratio);
+  }
+
+  function scoreForDiff(diff, event, guess) {
     if (diff === 0) return MAX_POINTS;
+    const eased = sameEraPrehistoryScore(event, guess);
+    if (eased != null) return eased;
     const tau = spanYears() * SCORE_TAU_RATIO;
     return Math.round(MAX_POINTS * Math.exp(-diff / tau));
   }
@@ -992,7 +1032,7 @@
     setGuess(guess, els.bceToggle.checked);
     const actual = state.current.year;
     const diff = Math.abs(guess - actual);
-    const points = scoreForDiff(diff);
+    const points = scoreForDiff(diff, state.current, guess);
     state.revealed = true;
     state.score += points;
     if (diff === 0) {
@@ -1175,8 +1215,11 @@
       const late = guess > actual;
       els.revealVerdict.textContent = (late ? "晚了 " : "早了 ") + formatNumber(diff) + " 年";
       els.revealVerdict.className = "reveal-verdict";
+      const eraNote = prehistoryEraNote(state.current, guess);
       els.revealPoints.innerHTML =
-        "正確是 " + formatYear(actual) + " · <strong>" + formatNumber(points) + "</strong> 分";
+        "正確是 " + formatYear(actual) +
+        (eraNote ? " · " + eraNote : "") +
+        " · <strong>" + formatNumber(points) + "</strong> 分";
     }
     placeRevealMarkers(guess, actual, diff);
     els.scoreMeterFill.style.width = "0%";
@@ -1447,6 +1490,8 @@
     escapeHtml: escapeHtml,
     formatNumber: formatNumber,
     scoreForDiff: scoreForDiff,
+    prehistoryEraNote: prehistoryEraNote,
+    isTaiwanPrehistoryEvent: isTaiwanPrehistoryEvent,
     spanYears: spanYears,
     shuffle: shuffle,
     ensureScheme: ensureScheme,

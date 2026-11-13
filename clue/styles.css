@@ -132,6 +132,7 @@ input[type="number"], input[type="search"] {
   padding: 12px 14px;
   min-height: 48px;
   line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 .choice:hover { border-color: var(--cinnabar); }
 .choice:disabled { cursor: default; opacity: 0.55; }

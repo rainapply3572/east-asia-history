@@ -205,7 +205,7 @@
     $("bestHint").textContent = best == null ? "" : "此設定的本機最高分：" + formatNumber(best);
     var error = "";
     if (n < state.rounds) error = "符合的事件少於回合數，請放寬地區、年代，或關閉「僅課內題」。";
-    else if (!state.hard && n < 4) error = "選擇題至少需要 4 則事件。可以改開困難模式，或放寬範圍。";
+    else if (!state.hard && n < 6) error = "選擇題至少需要 6 則事件。可以改開困難模式，或放寬範圍。";
     $("setupError").hidden = !error;
     $("setupError").textContent = error;
     $("startBtn").disabled = !!error;
@@ -243,25 +243,238 @@
     ];
   }
 
+  var NEIGHBORS = {
+    "中國": { "蒙古": 1, "朝鮮半島": 1, "越南": 1, "臺灣": 1, "日本": 1 },
+    "日本": { "朝鮮半島": 1, "臺灣": 1, "中國": 1 },
+    "朝鮮半島": { "中國": 1, "日本": 1, "蒙古": 1 },
+    "臺灣": { "中國": 1, "日本": 1, "越南": 1 },
+    "蒙古": { "中國": 1, "朝鮮半島": 1 },
+    "越南": { "中國": 1, "臺灣": 1, "日本": 1 }
+  };
+
+  var PLACE_WORDS = {
+    "北京": 1, "南京": 1, "上海": 1, "長安": 1, "洛陽": 1, "開封": 1, "杭州": 1, "廣州": 1,
+    "成都": 1, "泉州": 1, "福州": 1, "廈門": 1, "天津": 1, "瀋陽": 1, "漢城": 1, "首爾": 1,
+    "平壤": 1, "江戶": 1, "鎌倉": 1, "奈良": 1, "京都": 1, "東京": 1, "大阪": 1, "香港": 1,
+    "澳門": 1, "西貢": 1, "河內": 1, "順化": 1, "平城": 1, "洛邑": 1, "鎬京": 1, "建康": 1,
+    "大都": 1, "大興": 1, "大興城": 1, "蒙古": 1, "越南": 1, "日本": 1, "中國": 1, "臺灣": 1,
+    "台灣": 1, "朝鮮": 1, "中原": 1, "華北": 1, "江南": 1, "關中": 1, "西域": 1, "東北": 1,
+    "西南": 1, "東南": 1, "都城": 1, "首都": 1, "京師": 1, "國號": 1, "年號": 1, "朝廷": 1,
+    "皇帝": 1, "國王": 1, "天皇": 1, "將軍": 1, "王朝": 1, "政權": 1, "幕府": 1, "佛教": 1,
+    "儒家": 1, "科舉": 1, "條約": 1, "戰爭": 1, "改革": 1, "維新": 1, "明治": 1, "大正": 1,
+    "昭和": 1, "平成": 1, "康熙": 1, "乾隆": 1, "洪武": 1, "永樂": 1, "開元": 1, "貞觀": 1
+  };
+
+  function yearBand(year) {
+    if (year < -1000) return { min: 40, max: 500, slice: 120 };
+    if (year < 200) return { min: 20, max: 260, slice: 70 };
+    if (year < 600) return { min: 18, max: 200, slice: 55 };
+    if (year < 1400) return { min: 15, max: 150, slice: 40 };
+    if (year < 1840) return { min: 12, max: 110, slice: 32 };
+    return { min: 10, max: 80, slice: 24 };
+  }
+
+  function centuryOf(year) {
+    var n = Number(year);
+    if (!Number.isFinite(n) || n === 0) return 0;
+    if (n < 0) return -Math.ceil(Math.abs(n) / 100);
+    return Math.ceil(n / 100);
+  }
+
+  function plainText(value) {
+    return String(value || "").replace(/[^\u3400-\u9fff]/g, "");
+  }
+
+  function clueKeyword(event) {
+    var extra = (window.CLUES && window.CLUES[event.id]) || {};
+    return plainText(extra.keyword).replace(/[採接納受把將與在的了是為於及並]$/, "");
+  }
+
+  function personKey(event) {
+    var key = clueKeyword(event);
+    if (key.length < 2 || PLACE_WORDS[key]) return "";
+    if (/^今/.test(key) || /[城京都港府州縣]$/.test(key)) return "";
+    return key.slice(0, 3);
+  }
+
+  function coreTitle(event) {
+    var text = plainText(event && event.title);
+    [
+      "朝鮮民主主義人民共和國", "中華人民共和國", "蒙古人民共和國", "中華民國", "大韓民國", "大韓帝國",
+      "第一次", "第二次", "第三次", "第四次",
+      "邦交正常化", "主權移交", "宣布獨立", "開始實施", "爆發", "簽訂"
+    ].forEach(function (word) {
+      text = text.split(word).join("");
+    });
+    return text;
+  }
+
+  function longestShared(a, b) {
+    var best = "";
+    if (!a || !b) return best;
+    for (var i = 0; i < a.length; i++) {
+      for (var len = a.length - i; len >= 3 && len > best.length; len--) {
+        var slice = a.slice(i, i + len);
+        if (b.indexOf(slice) !== -1) {
+          best = slice;
+          break;
+        }
+      }
+    }
+    return best;
+  }
+
+  function titlesTooAlike(a, b) {
+    var ta = plainText(a.quizTitle || a.title);
+    var tb = plainText(b.quizTitle || b.title);
+    if (!ta || !tb) return false;
+    if (ta === tb) return true;
+    var shorter = ta.length < tb.length ? ta : tb;
+    var longer = ta.length < tb.length ? tb : ta;
+    if (shorter.length >= 4 && longer.indexOf(shorter) !== -1) return true;
+    var shared = longestShared(ta, tb);
+    return shared.length >= 6 && shared.length / shorter.length >= 0.72;
+  }
+
+  function sameTopic(a, b) {
+    var ka = personKey(a);
+    var kb = personKey(b);
+    if (ka && kb && (ka === kb || ka.indexOf(kb) === 0 || kb.indexOf(ka) === 0)) return true;
+    var ta = plainText(a.title) + plainText(a.quizTitle);
+    var tb = plainText(b.title) + plainText(b.quizTitle);
+    if (ka && tb.indexOf(ka) !== -1) return true;
+    if (kb && ta.indexOf(kb) !== -1) return true;
+    var shared = longestShared(coreTitle(a), coreTitle(b));
+    return shared.length >= 3 && !PLACE_WORDS[shared];
+  }
+
+  function regionTier(origin, region) {
+    if (region === origin) return 0;
+    if (NEIGHBORS[origin] && NEIGHBORS[origin][region]) return 1;
+    return 2;
+  }
+
+  function spreadChoices(list, answer, band, slots, already) {
+    if (slots <= 0 || !list.length) return [];
+    var picked = [];
+    var used = {};
+    function pickedAll() { return already.concat(picked); }
+    function yearGap(event) {
+      var gap = Infinity;
+      pickedAll().forEach(function (item) {
+        gap = Math.min(gap, Math.abs(item.year - event.year));
+      });
+      return gap === Infinity ? Math.abs(Math.abs(event.year - answer.year) - ((band.min + band.max) / 2)) : gap;
+    }
+    function crowded(event) {
+      return pickedAll().filter(function (item) {
+        return Math.abs(item.year - event.year) <= band.slice;
+      }).length;
+    }
+    function neighborCount() {
+      return pickedAll().filter(function (item) { return item.region !== answer.region; }).length;
+    }
+    var guard = 0;
+    while (picked.length < slots && guard < list.length + 3) {
+      guard += 1;
+      var sameLeft = list.some(function (event) {
+        return !used[event.id] && event.region === answer.region;
+      });
+      var roomier = list.some(function (event) {
+        return !used[event.id] && crowded(event) < 2;
+      });
+      var available = list.filter(function (event) {
+        if (used[event.id]) return false;
+        if (event.region !== answer.region && neighborCount() >= 2 && sameLeft) return false;
+        if (crowded(event) >= 2 && roomier) return false;
+        return true;
+      });
+      if (!available.length) break;
+      var nearest = available.reduce(function (min, event) {
+        return Math.min(min, Math.abs(event.year - answer.year));
+      }, Infinity);
+      if (nearest > band.max) {
+        available.sort(function (a, b) {
+          var tier = regionTier(answer.region, a.region) - regionTier(answer.region, b.region);
+          if (tier) return tier;
+          return Math.abs(a.year - answer.year) - Math.abs(b.year - answer.year);
+        });
+        var nextSparse = available[0];
+        used[nextSparse.id] = true;
+        picked.push(nextSparse);
+        continue;
+      }
+      var mid = (band.min + band.max) / 2;
+      available.sort(function (a, b) {
+        var tier = regionTier(answer.region, a.region) - regionTier(answer.region, b.region);
+        if (tier) return tier;
+        var century = Math.abs(centuryOf(a.year) - centuryOf(answer.year)) - Math.abs(centuryOf(b.year) - centuryOf(answer.year));
+        if (century) return century;
+        var da = Math.abs(Math.abs(a.year - answer.year) - mid);
+        var db = Math.abs(Math.abs(b.year - answer.year) - mid);
+        if (Math.abs(da - db) > 12) return da - db;
+        return yearGap(b) - yearGap(a);
+      });
+      var front = available.slice(0, Math.max(1, Math.ceil(available.length / 3)));
+      var haveBefore = picked.some(function (item) { return item.year < answer.year; });
+      var haveAfter = picked.some(function (item) { return item.year > answer.year; });
+      if (haveBefore !== haveAfter) {
+        var side = front.filter(function (event) {
+          return haveBefore ? event.year > answer.year : event.year < answer.year;
+        });
+        if (side.length) front = side;
+      }
+      front.sort(function (a, b) { return yearGap(b) - yearGap(a); });
+      var next = front[Math.floor(Math.random() * Math.min(2, front.length))];
+      used[next.id] = true;
+      picked.push(next);
+    }
+    return picked;
+  }
+
   function distractors(answer, source) {
-    var rest = source.filter(function (event) { return event.id !== answer.id; });
-    var windows = [80, 200, 500, 5000];
+    var need = 5;
+    var band = yearBand(answer.year);
+    var rest = source.filter(function (event) {
+      return event && event.id !== answer.id && event.title && Number.isFinite(event.year);
+    });
     var chosen = [];
-    function take(list) {
-      shuffle(list).forEach(function (event) {
-        if (chosen.length >= 3) return;
-        if (!chosen.some(function (item) { return item.id === event.id; })) chosen.push(event);
+
+    function take(limits) {
+      if (chosen.length >= need) return;
+      var list = rest.filter(function (event) {
+        if (chosen.some(function (item) { return item.id === event.id; })) return false;
+        var diff = Math.abs(event.year - answer.year);
+        if (diff < limits.min) return false;
+        if (limits.max && diff > limits.max) return false;
+        if (regionTier(answer.region, event.region) > limits.tier) return false;
+        if (limits.century != null && Math.abs(centuryOf(event.year) - centuryOf(answer.year)) > limits.century) return false;
+        if (titlesTooAlike(answer, event)) return false;
+        if (limits.topic !== false && sameTopic(answer, event)) return false;
+        if (chosen.some(function (item) {
+          return titlesTooAlike(item, event) || (limits.topic !== false && sameTopic(item, event));
+        })) return false;
+        return true;
+      });
+      spreadChoices(list, answer, band, need - chosen.length, chosen).forEach(function (event) {
+        chosen.push(event);
       });
     }
-    windows.forEach(function (span) {
-      if (chosen.length >= 3) return;
-      take(rest.filter(function (event) {
-        return event.region === answer.region && Math.abs(event.year - answer.year) <= span;
-      }));
+
+    take({ min: band.min, max: band.max, tier: 1, century: 1, topic: true });
+    if (chosen.length < need) take({ min: band.min, max: Math.round(band.max * 2), tier: 1, century: 2, topic: true });
+    if (chosen.length < need) take({ min: band.min, max: 0, tier: 1, century: null, topic: true });
+    if (chosen.length < need) take({ min: Math.max(8, band.min - 4), max: 0, tier: 2, century: null, topic: true });
+    if (chosen.length < need) take({ min: 1, max: 0, tier: 2, century: null, topic: false });
+    rest.slice().sort(function (a, b) {
+      var tier = regionTier(answer.region, a.region) - regionTier(answer.region, b.region);
+      if (tier) return tier;
+      return Math.abs(a.year - answer.year) - Math.abs(b.year - answer.year);
+    }).forEach(function (event) {
+      if (chosen.length >= need) return;
+      if (!chosen.some(function (item) { return item.id === event.id; })) chosen.push(event);
     });
-    if (chosen.length < 3) take(rest.filter(function (event) { return event.region === answer.region; }));
-    if (chosen.length < 3) take(rest);
-    return chosen.slice(0, 3);
+    return chosen.slice(0, need);
   }
 
   function ensureMap(lat, lng) {
@@ -330,6 +543,11 @@
       btn.type = "button";
       btn.className = "choice";
       btn.textContent = event.quizTitle || event.title;
+      if (state.tried[event.id]) {
+        btn.disabled = true;
+        btn.classList.add("is-wrong");
+        btn.setAttribute("aria-disabled", "true");
+      }
       btn.addEventListener("click", function () { guess(event.id, btn); });
       box.appendChild(btn);
     });

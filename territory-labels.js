@@ -32,7 +32,7 @@
     if (year >= 1945) return pack("中華民國", "roc", 2);
     if (year >= 1895) return pack("日治臺灣", "taiwan-jp", 2);
     if (year >= 1683) return pack("清", "qing", 2);
-    if (year >= 1662) return pack("明鄭", "zheng", 2);
+    if (year >= 1662) return pack("鄭氏", "zheng", 2);
     if (year >= 1624) return pack("荷屬臺灣", "taiwan-dutch", 2);
     return pack("臺灣各族", "taiwan", 2);
   }

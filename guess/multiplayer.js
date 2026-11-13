@@ -1136,7 +1136,7 @@
       const answered = !!a.answered;
       const guess = answered ? a.guess : null;
       const diff = answered ? Math.abs(guess - actual) : null;
-      const points = answered ? Y().scoreForDiff(diff) : 0;
+      const points = answered ? Y().scoreForDiff(diff, event, guess) : 0;
       if (answered) {
         p.score = (p.score || 0) + points;
         if (diff === 0) {
@@ -1278,7 +1278,10 @@
       const late = guess > official.year;
       verdict.textContent = (late ? "晚了 " : "早了 ") + Y().formatNumber(diff) + " 年";
       verdict.className = "reveal-verdict";
-      pts.innerHTML = "正確是 " + Y().formatYear(official.year) + " · <strong>" + Y().formatNumber(points) + "</strong> 分";
+      const eraNote = Y().prehistoryEraNote(st.current, guess);
+      pts.innerHTML = "正確是 " + Y().formatYear(official.year) +
+        (eraNote ? " · " + eraNote : "") +
+        " · <strong>" + Y().formatNumber(points) + "</strong> 分";
     }
     const meterPts = mine && mine.answered ? points : 0;
     Y().els.scoreMeterFill.style.width = "0%";
