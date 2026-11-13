@@ -1692,7 +1692,7 @@
         mp.role = "host";
         setMode("host");
         setError("");
-        setStatus(mp.peer ? "" : "填寫暱稱後按「建立房間」。");
+        setStatus(mp.peer ? "" : "填寫暱稱後按「建立房間」，代碼會自動產生。");
       }
     });
     $("modeJoin") && $("modeJoin").addEventListener("click", () => {

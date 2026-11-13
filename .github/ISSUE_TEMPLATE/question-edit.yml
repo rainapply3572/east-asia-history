@@ -1,0 +1,94 @@
+name: 題庫修改
+description: 建議修改或刪除一道現有猜年題。維護者加上「核准」後才會變更。
+title: "[題庫修改] "
+labels:
+  - 題庫修改
+body:
+  - type: markdown
+    attributes:
+      value: |
+        題目編號必須與題庫裡的 id 完全相同。動作填「修改」或「刪除」。
+        刪除只在維護者加上「核准」後才會從題庫移除。
+  - type: input
+    id: qid
+    attributes:
+      label: 題目編號
+      description: 既有題目的 id，不能改成別的編號。
+    validations:
+      required: true
+  - type: dropdown
+    id: action
+    attributes:
+      label: 動作
+      options:
+        - 修改
+        - 刪除
+    validations:
+      required: true
+  - type: input
+    id: quiz_title
+    attributes:
+      label: 題目
+      description: 玩家看到的短題目。刪除時仍可留著，方便核對。
+  - type: textarea
+    id: quiz
+    attributes:
+      label: 事件敘述
+      description: 玩家作答前會看到的文字。不要提到朝代、年號或年分。
+    validations:
+      required: true
+  - type: input
+    id: year
+    attributes:
+      label: 年份
+      description: 西元填正整數，西元前填負數。
+    validations:
+      required: true
+  - type: dropdown
+    id: region
+    attributes:
+      label: 地區
+      options:
+        - 中國
+        - 日本
+        - 朝鮮半島
+        - 臺灣
+        - 蒙古
+        - 越南
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: 類型
+      options:
+        - 政治
+        - 戰爭
+        - 文化
+        - 外交
+        - 宗教
+        - 科技
+        - 經濟
+        - 社會
+    validations:
+      required: true
+  - type: input
+    id: location
+    attributes:
+      label: 地點
+  - type: input
+    id: source
+    attributes:
+      label: 出處
+  - type: dropdown
+    id: curriculum
+    attributes:
+      label: 課內
+      description: 只有維護者核准後才會變更。建議者預設維持原樣。
+      options:
+        - 否
+        - 是
+  - type: input
+    id: nick
+    attributes:
+      label: 提案人

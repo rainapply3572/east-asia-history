@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="東亞歷史猜年的題庫。可瀏覽題目，或提案新題與修改。">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <title>題庫專區｜東亞歷史猜年</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="page-bank">
+  <div class="bank-wrap">
+    <header class="bank-hero">
+      <p class="hero-links">
+        <a class="site-link" href="index.html">東亞歷史猜年</a>
+        <a class="site-link" href="../">東亞歷史時空圖</a>
+      </p>
+      <p class="eyebrow">Question Bank</p>
+      <h1>題庫專區</h1>
+      <p class="tagline">這裡列出猜年遊戲的全部題目。年份和朝代預設隱藏。新題與修改都要等維護者核准後才會進遊戲。</p>
+    </header>
+
+    <section class="panel bank-tools" aria-label="篩選題目">
+      <div class="bank-search">
+        <label for="bankSearch">搜尋</label>
+        <input type="search" id="bankSearch" placeholder="搜尋題目或敘述" autocomplete="off">
+      </div>
+      <div class="bank-filters">
+        <label>地區
+          <select id="bankRegion"></select>
+        </label>
+        <label>朝代／時期
+          <select id="bankPeriod"></select>
+        </label>
+        <label>排序
+          <select id="bankSort">
+            <option value="year-asc">年份由早到晚</option>
+            <option value="year-desc">年份由晚到早</option>
+          </select>
+        </label>
+        <label class="toggle">
+          <input type="checkbox" id="bankCurriculum">
+          <span>只看課內</span>
+        </label>
+        <label class="toggle">
+          <input type="checkbox" id="bankSpoilers">
+          <span>顯示年份與朝代</span>
+        </label>
+      </div>
+      <p class="bank-count" id="bankCount">載入中…</p>
+    </section>
+
+    <section aria-label="題目列表">
+      <div class="bank-list" id="bankList"></div>
+    </section>
+
+    <section class="panel bank-form" id="submitSection" aria-label="提案新題">
+      <h2>題庫申請</h2>
+      <p class="curriculum-hint">事件敘述是玩家作答前會讀到的文字，請不要寫出朝代、年號、世紀或西元年分。送出後會開啟 GitHub 新議題，需要 GitHub 帳號。維護者看過並加上「核准」之後，題目才會加入遊戲。</p>
+      <form id="submitForm" action="javascript:void(0)">
+        <label class="bank-field">題目 <span class="optional">（可留空）</span>
+          <input type="text" id="newTitle" maxlength="80" placeholder="短題目，留空則取敘述第一句">
+        </label>
+        <label class="bank-field">事件敘述
+          <textarea id="newQuiz" required maxlength="500" rows="5" placeholder="用中性的方式描述發生了什麼事"></textarea>
+        </label>
+        <div class="bank-year-row">
+          <label class="bank-field">年份
+            <input type="text" id="newYear" inputmode="numeric" required placeholder="1592" autocomplete="off">
+          </label>
+          <label class="toggle">
+            <input type="checkbox" id="newBce">
+            <span>西元前</span>
+          </label>
+        </div>
+        <div class="bank-split">
+          <label class="bank-field">地區
+            <select id="newRegion" required></select>
+          </label>
+          <label class="bank-field">類型
+            <select id="newCategory" required></select>
+          </label>
+        </div>
+        <label class="bank-field">地點 <span class="optional">（可留空）</span>
+          <input type="text" id="newLocation" maxlength="80" placeholder="例如 咸陽">
+        </label>
+        <label class="bank-field">出處 <span class="optional">（可留空）</span>
+          <input type="text" id="newSource" maxlength="200" placeholder="書名、課文或網址">
+        </label>
+        <label class="bank-field">提案人 <span class="optional">（可留空）</span>
+          <input type="text" id="newNick" maxlength="24" placeholder="怎麼稱呼你">
+        </label>
+        <p class="setup-error" id="newError" hidden></p>
+        <div class="bank-actions">
+          <button type="submit" class="primary">開啟 GitHub 議題</button>
+        </div>
+        <p class="issue-fallback" id="newFallback" hidden>
+          若沒有自動開啟，請點
+          <a id="newFallbackLink" href="index.html" target="_blank" rel="noopener noreferrer">這個連結</a>
+          送出申請。
+        </p>
+      </form>
+    </section>
+  </div>
+
+  <dialog class="bank-dialog" id="editDialog" aria-label="建議修改題目">
+    <form id="editForm" action="javascript:void(0)" class="bank-form dialog-form">
+      <div class="dialog-head">
+        <h2>建議修改</h2>
+        <button type="button" class="ghost" id="editClose">關閉</button>
+      </div>
+      <p class="curriculum-hint">編號不能改。送出後會開啟 GitHub 議題，需要 GitHub 帳號。維護者加上「核准」後才會改題庫；選「刪除」也要等核准才會移除。</p>
+      <label class="bank-field">題目編號
+        <input type="text" id="editId" readonly>
+      </label>
+      <fieldset class="action-set">
+        <legend>動作</legend>
+        <label class="toggle"><input type="radio" name="editAction" value="修改" checked> <span>修改</span></label>
+        <label class="toggle"><input type="radio" name="editAction" value="刪除"> <span>刪除</span></label>
+      </fieldset>
+      <label class="bank-field">題目
+        <input type="text" id="editTitle" maxlength="80">
+      </label>
+      <label class="bank-field">事件敘述
+        <textarea id="editQuiz" required maxlength="500" rows="5"></textarea>
+      </label>
+      <div class="bank-year-row">
+        <label class="bank-field">年份
+          <input type="text" id="editYear" inputmode="numeric" required autocomplete="off">
+        </label>
+        <label class="toggle">
+          <input type="checkbox" id="editBce">
+          <span>西元前</span>
+        </label>
+      </div>
+      <div class="bank-split">
+        <label class="bank-field">地區
+          <select id="editRegion" required></select>
+        </label>
+        <label class="bank-field">類型
+          <select id="editCategory" required></select>
+        </label>
+      </div>
+      <label class="bank-field">地點
+        <input type="text" id="editLocation" maxlength="80">
+      </label>
+      <label class="bank-field">出處
+        <input type="text" id="editSource" maxlength="200">
+      </label>
+      <label class="toggle">
+        <input type="checkbox" id="editCurriculum">
+        <span>課內題</span>
+      </label>
+      <label class="bank-field">提案人 <span class="optional">（可留空）</span>
+        <input type="text" id="editNick" maxlength="24">
+      </label>
+      <p class="setup-error" id="editError" hidden></p>
+      <div class="bank-actions">
+        <button type="submit" class="primary" id="editSubmit">開啟 GitHub 議題</button>
+      </div>
+      <p class="issue-fallback" id="editFallback" hidden>
+        若沒有自動開啟，請點
+        <a id="editFallbackLink" href="index.html" target="_blank" rel="noopener noreferrer">這個連結</a>。
+      </p>
+    </form>
+  </dialog>
+
+  <script src="events.js"></script>
+  <script src="periods.js"></script>
+  <script src="bank.js"></script>
+</body>
+</html>

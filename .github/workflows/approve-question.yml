@@ -1,0 +1,32 @@
+name: 核准題庫
+
+# 只在「加上標籤」時執行，開新議題或編輯內文都不會自動改題庫。
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: question-bank
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    if: github.event.label.name == '核准' && github.event.sender.login == 'rainapply3572' && github.event.sender.login == github.repository_owner
+    runs-on: ubuntu-latest
+    steps:
+      - name: 取出主分支
+        uses: actions/checkout@v4
+
+      - name: 設定 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: 依議題內容寫入題庫
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node .github/scripts/apply-question.mjs

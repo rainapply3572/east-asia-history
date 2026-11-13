@@ -7,8 +7,16 @@
   const MAX_POINTS = 5000;
   const SCORE_TAU_RATIO = 0.08;
   const STORAGE_KEY = "eastAsiaYearGuess.bestScores";
-  const DATA_MIN = -1046;
-  const DATA_MAX = 1999;
+  const FALLBACK_MIN = -1046;
+  const FALLBACK_MAX = 1999;
+  const yearSpan = (Array.isArray(window.EVENTS) ? window.EVENTS : []).reduce((span, event) => {
+    if (!event || !Number.isFinite(event.year)) return span;
+    if (event.year < span.min) span.min = event.year;
+    if (event.year > span.max) span.max = event.year;
+    return span;
+  }, { min: FALLBACK_MIN, max: FALLBACK_MAX });
+  const DATA_MIN = yearSpan.min;
+  const DATA_MAX = yearSpan.max;
 
   const PRESETS = [
     { id: "all", label: "全時期", start: DATA_MIN, end: DATA_MAX },
@@ -533,15 +541,35 @@
     state.tileLayer = layer;
   }
 
+  const REGION_FOCUS = {
+    "中國": [35.5, 104],
+    "日本": [37, 137.5],
+    "朝鮮半島": [37.5, 127.8],
+    "臺灣": [23.7, 121],
+    "蒙古": [46.5, 103.5],
+    "越南": [16.2, 107.2]
+  };
+
+  function eventFocus(event) {
+    const lat = Number(event && event.lat);
+    const lng = Number(event && event.lng);
+    if (Number.isFinite(lat) && Number.isFinite(lng)) return { lat: lat, lng: lng, exact: true };
+    const focus = REGION_FOCUS[event && event.region] || [35, 115];
+    return { lat: focus[0], lng: focus[1], exact: false };
+  }
+
   function showEventOnMap(event) {
-    if (!state.showMap) return;
+    if (!state.showMap || !event) return;
     ensureMap();
-    if (!state.map) return;
-    state.map.setView([event.lat, event.lng], 6, { animate: false });
-    state.marker.setLatLng([event.lat, event.lng]);
+    if (!state.map || !state.marker) return;
+    const pos = eventFocus(event);
+    const zoom = pos.exact ? 6 : 4;
+    state.map.setView([pos.lat, pos.lng], zoom, { animate: false });
+    state.marker.setLatLng([pos.lat, pos.lng]);
     requestAnimationFrame(() => {
+      if (!state.map) return;
       state.map.invalidateSize();
-      state.map.setView([event.lat, event.lng], 6, { animate: false });
+      state.map.setView([pos.lat, pos.lng], zoom, { animate: false });
     });
   }
 

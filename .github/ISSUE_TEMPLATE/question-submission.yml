@@ -1,0 +1,83 @@
+name: 題庫申請
+description: 提案一道新的猜年題。維護者加上「核准」後才會入題庫。
+title: "[題庫申請] "
+labels:
+  - 題庫申請
+body:
+  - type: markdown
+    attributes:
+      value: |
+        送出需要 GitHub 帳號。事件敘述是玩家會讀到的文字，請不要寫朝代、年號、世紀或西元年分。
+        維護者可以先改這個議題的欄位，再加上「核准」。加上之前若要覆寫欄位，也可以用擁有者帳號留言。
+  - type: input
+    id: quiz_title
+    attributes:
+      label: 題目
+      description: 短題目，可留空。留空時會從事件敘述的第一句產生。
+  - type: textarea
+    id: quiz
+    attributes:
+      label: 事件敘述
+      description: 玩家作答前會看到的文字。不要提到朝代、年號或年分。
+      placeholder: 有人在關中受命推動一連串制度，使該國的國力很快增強。
+    validations:
+      required: true
+  - type: input
+    id: year
+    attributes:
+      label: 年份
+      description: 西元填正整數（例如 1592）。西元前填負數（例如 -221）。
+      placeholder: "1592"
+    validations:
+      required: true
+  - type: dropdown
+    id: region
+    attributes:
+      label: 地區
+      options:
+        - 中國
+        - 日本
+        - 朝鮮半島
+        - 臺灣
+        - 蒙古
+        - 越南
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: 類型
+      options:
+        - 政治
+        - 戰爭
+        - 文化
+        - 外交
+        - 宗教
+        - 科技
+        - 經濟
+        - 社會
+    validations:
+      required: true
+  - type: input
+    id: location
+    attributes:
+      label: 地點
+      description: 可留空。
+  - type: input
+    id: source
+    attributes:
+      label: 出處
+      description: 書名、課文或網址。可留空。
+  - type: input
+    id: nick
+    attributes:
+      label: 提案人
+      description: 可留空。
+  - type: input
+    id: action
+    attributes:
+      label: 動作
+      description: 新題請填「新增」。
+      placeholder: 新增
+    validations:
+      required: true

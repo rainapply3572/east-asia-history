@@ -17,7 +17,10 @@
     <!-- 起始設定 -->
     <section class="screen screen-start" id="screenStart" aria-label="遊戲設定">
       <header class="hero">
-        <a class="site-link" href="../">東亞歷史時空圖</a>
+        <p class="hero-links">
+          <a class="site-link" href="../">東亞歷史時空圖</a>
+          <a class="site-link" href="bank.html">題庫專區</a>
+        </p>
         <p class="eyebrow">East Asia Year Guess</p>
         <h1>東亞歷史猜年</h1>
         <p class="tagline">讀一段事件，在時間軸上標出你認為的年分。離答案越近，分數越高。</p>
@@ -34,6 +37,7 @@
             <span>暱稱</span>
             <input type="text" id="mpNick" maxlength="12" placeholder="怎麼稱呼你" autocomplete="nickname">
           </label>
+          <p class="mp-host-note" id="mpHostNote">房間代碼會在建立後自動產生，無須自行填寫。請把代碼傳給要加入的人。</p>
           <label class="mp-field" id="mpCodeField" hidden>
             <span>房間代碼</span>
             <input type="text" id="mpCodeInput" maxlength="8" placeholder="例如 7K3M9P" autocomplete="off" spellcheck="false">
