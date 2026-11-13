@@ -20,7 +20,7 @@
       </p>
       <p class="eyebrow">Question Bank</p>
       <h1>題庫專區</h1>
-      <p class="tagline">這裡列出猜年遊戲的全部題目。年份和朝代預設隱藏。新題與修改都要等維護者核准後才會進遊戲。</p>
+      <p class="tagline">這裡列出猜年遊戲的全部題目，依朝代分組。每題的年份預設隱藏。新題與修改都要等維護者核准後才會進遊戲。</p>
     </header>
 
     <section class="panel bank-form" id="submitSection" aria-label="提案新題">
@@ -95,7 +95,7 @@
         </label>
         <label class="toggle">
           <input type="checkbox" id="bankSpoilers">
-          <span>顯示年份與朝代</span>
+          <span>顯示年份</span>
         </label>
       </div>
       <p class="bank-count" id="bankCount">載入中…</p>
@@ -106,10 +106,10 @@
     </section>
   </div>
 
-  <dialog class="bank-dialog" id="editDialog" aria-label="建議修改題目">
+  <dialog class="bank-dialog" id="editDialog" aria-label="提出修改申請">
     <form id="editForm" action="javascript:void(0)" class="bank-form dialog-form">
       <div class="dialog-head">
-        <h2>建議修改</h2>
+        <h2>提出修改申請</h2>
         <button type="button" class="ghost" id="editClose">關閉</button>
       </div>
       <p class="curriculum-hint">編號不能改。送出後會開啟 GitHub 議題，需要 GitHub 帳號。維護者加上「核准」後才會改題庫；選「刪除」也要等核准才會移除。</p>

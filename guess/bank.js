@@ -225,6 +225,30 @@
     return "";
   }
 
+  var SCHEME_ORDER = ["中國", "日本", "朝鮮", "越南", "臺灣", "蒙古"];
+  var manualOpen = {};
+  var searchOpen = {};
+  var lastQuery = "";
+
+  function groupInfo(event) {
+    var period = displayPeriod(event);
+    var schemeId = REGION_TO_SCHEME[event.region] || "";
+    var schemes = window.PERIOD_SCHEMES || {};
+    var scheme = schemes[schemeId];
+    if (!period) {
+      return { key: "none", name: "未分時期", scheme: "", start: 0, unknown: true, schemeOrder: 99 };
+    }
+    var schemeOrder = SCHEME_ORDER.indexOf(schemeId);
+    return {
+      key: schemeId + ":" + period.id,
+      name: period.label,
+      scheme: scheme && scheme.label ? scheme.label : schemeId,
+      start: period.start,
+      unknown: false,
+      schemeOrder: schemeOrder < 0 ? 50 : schemeOrder
+    };
+  }
+
   function filteredEvents() {
     var query = $("bankSearch").value.trim().toLowerCase();
     var region = $("bankRegion").value;
@@ -242,11 +266,9 @@
         if (!hit) return false;
       }
       if (!query) return true;
-      var periodLabel = displayPeriod(event);
-      var blob = [quizTitle(event), quizText(event), event.region || "", event.quizLocation || event.location || ""];
-      if (spoilers) {
-        blob.push(formatYear(event.year), String(event.year), periodLabel ? periodLabel.label : "");
-      }
+      var info = groupInfo(event);
+      var blob = [quizTitle(event), quizText(event), event.region || "", event.quizLocation || event.location || "", info.name, info.scheme];
+      if (spoilers) blob.push(formatYear(event.year), String(event.year));
       return blob.join("\n").toLowerCase().indexOf(query) !== -1;
     });
     var dir = $("bankSort").value === "year-desc" ? -1 : 1;
@@ -256,7 +278,27 @@
     return list;
   }
 
+  function cardHtml(event, spoilers) {
+    var answer = spoilers
+      ? '<p class="bank-answer"><span>年份</span> ' + esc(formatYear(event.year)) + "</p>"
+      : '<p class="bank-answer is-hidden">年份已隱藏</p>';
+    return '<article class="bank-card">' +
+      '<div class="bank-card-top"><h2>' + esc(quizTitle(event)) + "</h2>" +
+      '<button type="button" class="ghost bank-edit" data-id="' + esc(event.id) + '">提出修改申請</button></div>' +
+      '<p class="bank-text">' + esc(quizText(event)) + "</p>" +
+      '<p class="bank-meta">' +
+      '<span class="badge">' + esc(event.region || "—") + "</span>" +
+      (event.quizLocation || event.location ? '<span class="badge">' + esc(event.quizLocation || event.location) + "</span>" : "") +
+      '<span class="badge' + (event.curriculum ? " is-on" : "") + '">' + (event.curriculum ? "課內" : "非課內") + "</span>" +
+      "</p>" + answer + "</article>";
+  }
+
   function render() {
+    var query = $("bankSearch").value.trim();
+    if (query !== lastQuery) {
+      searchOpen = {};
+      lastQuery = query;
+    }
     var list = filteredEvents();
     var spoilers = $("bankSpoilers").checked;
     $("bankCount").textContent = "顯示 " + list.length + " 題／共 " + events().length + " 題";
@@ -265,21 +307,37 @@
       root.innerHTML = '<p class="bank-empty">沒有符合的題目。</p>';
       return;
     }
-    root.innerHTML = list.map(function (event) {
-      var period = displayPeriod(event);
-      var answer = spoilers
-        ? '<p class="bank-answer"><span>年份</span> ' + esc(formatYear(event.year)) +
-          '　<span>朝代／時期</span> ' + esc(period ? period.label : "—") + "</p>"
-        : '<p class="bank-answer is-hidden"><span>年份與朝代</span> 已隱藏</p>';
-      return '<article class="bank-card">' +
-        '<div class="bank-card-top"><h2>' + esc(quizTitle(event)) + "</h2>" +
-        '<button type="button" class="ghost bank-edit" data-id="' + esc(event.id) + '">修改</button></div>' +
-        '<p class="bank-text">' + esc(quizText(event)) + "</p>" +
-        '<p class="bank-meta">' +
-        '<span class="badge">' + esc(event.region || "—") + "</span>" +
-        (event.quizLocation || event.location ? '<span class="badge">' + esc(event.quizLocation || event.location) + "</span>" : "") +
-        '<span class="badge' + (event.curriculum ? " is-on" : "") + '">' + (event.curriculum ? "課內" : "非課內") + "</span>" +
-        "</p>" + answer + "</article>";
+    var buckets = {};
+    var groups = [];
+    list.forEach(function (event) {
+      var info = groupInfo(event);
+      if (!buckets[info.key]) {
+        buckets[info.key] = { info: info, items: [] };
+        groups.push(buckets[info.key]);
+      }
+      buckets[info.key].items.push(event);
+    });
+    var dir = $("bankSort").value === "year-desc" ? -1 : 1;
+    groups.sort(function (a, b) {
+      if (a.info.unknown !== b.info.unknown) return a.info.unknown ? 1 : -1;
+      if (a.info.start !== b.info.start) return (a.info.start - b.info.start) * dir;
+      if (a.info.schemeOrder !== b.info.schemeOrder) return a.info.schemeOrder - b.info.schemeOrder;
+      return a.info.name.localeCompare(b.info.name, "zh-Hant");
+    });
+    root.innerHTML = groups.map(function (group) {
+      group.items.sort(function (a, b) {
+        return ((a.year || 0) - (b.year || 0)) * dir || quizTitle(a).localeCompare(quizTitle(b), "zh-Hant");
+      });
+      var open = query ? searchOpen[group.info.key] !== false : !!manualOpen[group.info.key];
+      return '<section class="bank-group' + (open ? " is-open" : "") + '" data-group="' + esc(group.info.key) + '">' +
+        '<button type="button" class="bank-group-toggle" aria-expanded="' + (open ? "true" : "false") + '">' +
+        '<span class="bank-group-chevron" aria-hidden="true"></span>' +
+        '<span class="bank-group-name">' + esc(group.info.name) + "</span>" +
+        (group.info.scheme ? '<span class="bank-group-scheme">' + esc(group.info.scheme) + "</span>" : "") +
+        '<span class="bank-group-count">' + group.items.length + " 題</span></button>" +
+        '<div class="bank-group-body"' + (open ? "" : " hidden") + ">" +
+        group.items.map(function (event) { return cardHtml(event, spoilers); }).join("") +
+        "</div></section>";
     }).join("");
   }
 
@@ -314,6 +372,18 @@
       $(id).addEventListener("change", render);
     });
     $("bankList").addEventListener("click", function (event) {
+      var toggle = event.target.closest(".bank-group-toggle");
+      if (toggle) {
+        var section = toggle.closest(".bank-group");
+        var key = section.getAttribute("data-group");
+        var next = toggle.getAttribute("aria-expanded") !== "true";
+        if ($("bankSearch").value.trim()) searchOpen[key] = next;
+        else manualOpen[key] = next;
+        section.classList.toggle("is-open", next);
+        toggle.setAttribute("aria-expanded", next ? "true" : "false");
+        section.querySelector(".bank-group-body").hidden = !next;
+        return;
+      }
       var button = event.target.closest(".bank-edit");
       if (!button) return;
       openEdit(button.getAttribute("data-id"));
