@@ -56,23 +56,30 @@
       <main class="map-wrap">
         <div id="map" role="application" aria-label="東亞歷史地圖"></div>
         <div class="map-ui">
-          <div class="legend" id="legend" aria-hidden="true"></div>
-          <section class="territory-panel" id="territoryPanel" aria-label="疆域圖">
-            <div class="territory-head">
-              <label class="toggle">
-                <input type="checkbox" id="territoryToggle" checked>
-                <span>顯示疆域圖</span>
-              </label>
-              <button type="button" class="territory-toggle-details" id="territoryExpand" aria-expanded="false">展開圖例</button>
+          <div class="legend" id="legend">
+            <button type="button" class="legend-toggle" id="legendToggle" aria-expanded="false" aria-controls="legendFold">
+              <span class="legend-chevron" aria-hidden="true">▸</span>圖例
+            </button>
+            <div class="legend-fold" id="legendFold">
+              <div class="legend-body" id="legendBody"></div>
+              <section class="territory-panel" id="territoryPanel" aria-label="疆域圖">
+                <div class="territory-head">
+                  <label class="toggle">
+                    <input type="checkbox" id="territoryToggle" checked>
+                    <span>顯示疆域圖</span>
+                  </label>
+                  <button type="button" class="territory-toggle-details" id="territoryExpand" aria-expanded="false">顏色細目</button>
+                </div>
+                <p class="territory-year" id="territoryYear"></p>
+                <p class="territory-majors" id="territoryMajors"></p>
+                <div class="territory-details" id="territoryDetails" hidden>
+                  <ul class="territory-list" id="territoryList"></ul>
+                  <p class="territory-note" id="territoryNote"></p>
+                </div>
+                <p class="territory-cite" id="territoryCite"></p>
+              </section>
             </div>
-            <p class="territory-year" id="territoryYear"></p>
-            <p class="territory-majors" id="territoryMajors"></p>
-            <div class="territory-details" id="territoryDetails" hidden>
-              <ul class="territory-list" id="territoryList"></ul>
-              <p class="territory-note" id="territoryNote"></p>
-            </div>
-            <p class="territory-cite" id="territoryCite"></p>
-          </section>
+          </div>
         </div>
       </main>
     </div>

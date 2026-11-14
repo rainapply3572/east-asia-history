@@ -162,11 +162,15 @@
     const body = CATEGORIES.map((category) => {
       return `<div><i style="background:${CATEGORY_COLORS[category]}"></i>${category}</div>`;
     }).join("");
-    const narrow = window.matchMedia("(max-width: 760px)").matches;
-    els.legend.classList.toggle("is-open", !narrow);
-    els.legend.innerHTML =
-      '<button type="button" class="legend-toggle" id="legendToggle" aria-expanded="' +
-      String(!narrow) + '"><span class="legend-chevron" aria-hidden="true">▸</span>圖例</button><div class="legend-body">' + body + "</div>";
+    const host = document.getElementById("legendBody");
+    if (host) host.innerHTML = body;
+    if (els.legend && !els.legend.dataset.ready) {
+      const narrow = window.matchMedia("(max-width: 760px)").matches;
+      els.legend.classList.toggle("is-open", !narrow);
+      const btn = document.getElementById("legendToggle");
+      if (btn) btn.setAttribute("aria-expanded", String(!narrow));
+      els.legend.dataset.ready = "1";
+    }
   }
 
   function renderRange() {
@@ -1197,7 +1201,7 @@
         const open = els.territoryDetails && els.territoryDetails.hidden;
         if (els.territoryDetails) els.territoryDetails.hidden = !open;
         els.territoryExpand.setAttribute("aria-expanded", String(Boolean(open)));
-        els.territoryExpand.textContent = open ? "收合圖例" : "展開圖例";
+        els.territoryExpand.textContent = open ? "收合顏色" : "顏色細目";
         if (els.territoryPanel) els.territoryPanel.classList.toggle("is-open", Boolean(open));
       });
     }
