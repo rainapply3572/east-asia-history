@@ -776,6 +776,7 @@
 
   function pickBalancedQueue(pool, count) {
     const buckets = new Map();
+    // Only periods that still have an eligible event are buckets, so an empty band such as 商 is never drawn.
     pool.forEach((event) => {
       const key = periodGroupKey(event);
       if (!buckets.has(key)) buckets.set(key, []);

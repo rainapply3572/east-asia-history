@@ -8,6 +8,7 @@ window.PERIOD_SCHEMES = {
   "中國": {
     label: "中國朝代",
     periods: [
+      { id: "shang", label: "商", short: "商", start: -1200, end: -1047, visStart: -1200, visEnd: -1046, color: "#9c7a4a", note: "補時間軸左緣至前 1046 年武王克商。商代實際更早，此帶只填到西周起年。" },
       { id: "western-zhou", label: "西周", short: "西周", start: -1046, end: -771, visStart: -1046, visEnd: -770, color: "#6b5344", note: "年代依夏商周斷代工程常用的前 1046 年武王克商說。" },
       { id: "chunqiu", label: "春秋", short: "春秋", start: -770, end: -476, visStart: -770, visEnd: -475, color: "#8a6b3d", note: "平王東遷前 770 年；春秋、戰國之界取前 475 年（周元王元年）一說。" },
       { id: "zhanguo", label: "戰國", short: "戰國", start: -475, end: -221, visStart: -475, visEnd: -221, color: "#7a5c8a" },
