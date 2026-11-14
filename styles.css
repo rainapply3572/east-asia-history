@@ -714,18 +714,29 @@ textarea {
 
 .legend-toggle {
   display: none;
+  align-items: center;
+  gap: 6px;
   font: inherit;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
-  border: 0;
-  background: transparent;
+  border: 1px solid var(--line);
+  background: #fffaf3;
   color: var(--ink);
   cursor: pointer;
-  padding: 8px 4px;
+  padding: 6px 12px;
   min-height: 40px;
-  width: 100%;
-  text-align: left;
+  width: auto;
+  border-radius: 999px;
+  box-shadow: var(--shadow);
 }
+.legend-toggle:hover { border-color: var(--cinnabar); }
+.legend-toggle:active { background: #f4e4d4; }
+.legend-chevron {
+  display: inline-block;
+  color: var(--cinnabar);
+  transition: transform 0.18s ease;
+}
+.legend.is-open .legend-chevron { transform: rotate(90deg); }
 
 @media (max-width: 900px) {
   body {
@@ -788,14 +799,6 @@ textarea {
     min-height: 40px;
   }
   .speed-control select { font-size: 16px; min-height: 40px; }
-  .legend-toggle { display: inline-flex; align-items: center; }
-  .legend .legend-body { display: none; }
-  .legend.is-open .legend-body { display: block; }
-  .legend {
-    display: block;
-    padding: 4px 10px;
-    max-width: min(220px, calc(100vw - 72px));
-  }
   .detail {
     max-width: 100%;
     max-height: min(46vh, calc(100dvh - var(--header-h) - var(--timeline-h) - 20px));
@@ -823,6 +826,33 @@ textarea {
   .era-wide { display: none; }
 }
 
+@media (max-width: 760px) {
+  .map-ui {
+    width: auto;
+    max-width: calc(100% - 56px);
+    align-items: flex-end;
+    top: 8px;
+    right: max(8px, env(safe-area-inset-right));
+  }
+  .territory-panel { width: min(240px, calc(100vw - 80px)); }
+  .territory-head { flex-wrap: wrap; }
+  .legend-toggle { display: inline-flex; }
+  .legend .legend-body { display: none; }
+  .legend.is-open .legend-body { display: block; }
+  .legend {
+    width: max-content;
+    max-width: min(220px, calc(100vw - 72px));
+    padding: 0;
+    align-self: flex-end;
+  }
+  .legend.is-open {
+    width: min(220px, calc(100vw - 72px));
+    padding: 6px 8px 8px;
+    max-height: 34vh;
+    overflow: auto;
+  }
+}
+
 @media (max-width: 520px) {
   :root { --header-h: 72px; --timeline-h: 148px; }
   .header h1 { font-size: 18px; }
@@ -830,7 +860,6 @@ textarea {
   .eyebrow { display: none; }
   .era-mid { display: none; }
   .timeline-top { gap: 6px; }
-  .map-ui { width: min(100% - 16px, 280px); }
 }
 
 @media (max-height: 500px) and (orientation: landscape) {

@@ -162,11 +162,11 @@
     const body = CATEGORIES.map((category) => {
       return `<div><i style="background:${CATEGORY_COLORS[category]}"></i>${category}</div>`;
     }).join("");
-    const narrow = window.matchMedia("(max-width: 900px)").matches;
+    const narrow = window.matchMedia("(max-width: 760px)").matches;
     els.legend.classList.toggle("is-open", !narrow);
     els.legend.innerHTML =
       '<button type="button" class="legend-toggle" id="legendToggle" aria-expanded="' +
-      String(!narrow) + '">圖例</button><div class="legend-body">' + body + "</div>";
+      String(!narrow) + '"><span class="legend-chevron" aria-hidden="true">▸</span>圖例</button><div class="legend-body">' + body + "</div>";
   }
 
   function renderRange() {
@@ -196,7 +196,10 @@
       title: `${formatYear(event.year)}　${event.title}`,
       riseOnHover: true,
     });
-    marker.bindPopup(`<strong>${event.title}</strong><br>${formatYear(event.year)}　${event.location}`);
+    marker.bindPopup(
+      `<strong>${event.title}</strong><br>${formatYear(event.year)}　${event.location}`,
+      { autoPan: false }
+    );
     marker.on("click", () => selectEvent(event.id, { fromMap: true }));
     state.markersById.set(event.id, marker);
     state.cluster.addLayer(marker);
@@ -233,7 +236,8 @@
       return;
     }
 
-    events.forEach((event) => {
+    const ordered = events.slice().sort((a, b) => b.year - a.year || a.title.localeCompare(b.title, "zh-Hant"));
+    ordered.forEach((event) => {
       const item = document.createElement("li");
       const button = document.createElement("button");
       button.type = "button";
@@ -304,7 +308,13 @@
     }
 
     const active = els.eventList.querySelector(`[data-id="${id}"]`);
-    if (active) active.scrollIntoView({ block: "nearest" });
+    if (active && els.eventList) {
+      const list = els.eventList;
+      const top = active.offsetTop;
+      const bottom = top + active.offsetHeight;
+      if (top < list.scrollTop) list.scrollTop = top;
+      else if (bottom > list.scrollTop + list.clientHeight) list.scrollTop = bottom - list.clientHeight;
+    }
   }
 
   function polityColor(key) {
@@ -1067,6 +1077,7 @@
       autoClose: false,
       closeOnClick: false,
       closeButton: false,
+      autoPan: false,
       className: "play-toast",
       maxWidth: 280,
       offset: [0, -10],
