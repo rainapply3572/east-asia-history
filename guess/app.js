@@ -7,7 +7,7 @@
   const MAX_POINTS = 5000;
   const SCORE_TAU_RATIO = 0.08;
   const STORAGE_KEY = "eastAsiaYearGuess.bestScores";
-  const FALLBACK_MIN = -1046;
+  const FALLBACK_MIN = -1200;
   const FALLBACK_MAX = 2020;
   const yearSpan = (Array.isArray(window.EVENTS) ? window.EVENTS : []).reduce((span, event) => {
     if (!event || !Number.isFinite(event.year)) return span;
